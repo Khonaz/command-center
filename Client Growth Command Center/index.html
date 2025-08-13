@@ -3,13 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Client Growth Command Center 7.0</title>
+    <title>Client Growth Command Center 8.0</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <!-- Quill Rich Text Editor -->
+    <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+    <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
 
     <style>
         :root {
@@ -56,10 +59,16 @@
         .draggable { cursor: grab; }
         .dragging { opacity: 0.5; cursor: grabbing; }
         
-        /* Styles for editable profile */
         .profile-view .profile-edit-field { display: none; }
         .profile-edit .profile-view-field { display: none; }
         .profile-edit .profile-edit-field { display: block; }
+        
+        /* Quill Editor Styles */
+        .ql-toolbar { border-radius: 8px 8px 0 0; border-color: var(--border-color) !important; }
+        .ql-container { border-radius: 0 0 8px 8px; border-color: var(--border-color) !important; min-height: 300px; font-size: 16px; }
+        .ql-editor { color: var(--text-primary); }
+        .ql-snow .ql-stroke { stroke: var(--text-secondary); }
+        .ql-snow .ql-picker-label { color: var(--text-secondary); }
     </style>
 </head>
 <body class="text-slate-200">
@@ -69,7 +78,7 @@
         <header class="glass-pane shadow-lg z-20 border-b">
             <div class="container mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="flex items-center justify-between h-16">
-                    <h1 class="text-xl font-bold accent-gradient-text hidden md:block"><i class="fa-solid fa-rocket mr-2"></i>Command Center 7.0</h1>
+                    <h1 class="text-xl font-bold accent-gradient-text hidden md:block"><i class="fa-solid fa-rocket mr-2"></i>Command Center 8.0</h1>
                     <div class="flex-1 mx-4">
                         <input type="search" id="clientSearch" placeholder=" Search clients..." class="w-full max-w-xs p-2 rounded-lg text-sm glass-pane">
                     </div>
@@ -111,7 +120,7 @@
             <!-- Main Content Area -->
             <main id="mainContent" class="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
                 <div id="welcomeMessage" class="text-center text-slate-400 h-full flex flex-col justify-center items-center">
-                    <h2 class="text-3xl font-bold accent-gradient-text">Welcome to Command Center 7.0</h2>
+                    <h2 class="text-3xl font-bold accent-gradient-text">Welcome to Command Center 8.0</h2>
                     <p class="mt-2 text-lg">Select a client to begin.</p>
                 </div>
                 <div id="clientDashboard" class="hidden"></div>
@@ -148,21 +157,29 @@
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     <div class="lg:col-span-2">
                         <input type="text" id="noteTitle" placeholder="Note Title" class="p-3 rounded-lg w-full mb-4 text-lg font-semibold" required>
-                        <textarea id="noteContent" placeholder="Start writing your note here..." class="p-3 rounded-lg w-full h-96"></textarea>
+                        <div id="noteContentEditor"></div>
                     </div>
                     <div>
                         <h3 class="font-semibold mb-2 text-slate-300">Folder</h3>
                         <select id="noteFolder" class="p-3 rounded-lg w-full mb-4"></select>
+                        
+                        <h3 class="font-semibold mb-2 text-slate-300">Tags</h3>
+                        <input type="text" id="noteTags" placeholder="Add tags... (e.g., #ideas, #meeting)" class="p-3 rounded-lg w-full mb-4">
+                        
                         <h3 class="font-semibold mb-2 text-slate-300">Link to Clients</h3>
-                        <div id="noteClientLinks" class="space-y-2 h-80 overflow-y-auto p-3 glass-pane rounded-lg">
+                        <div id="noteClientLinks" class="space-y-2 h-64 overflow-y-auto p-3 glass-pane rounded-lg">
                             <!-- Client checkboxes will be populated here -->
                         </div>
                     </div>
                 </div>
-                <div class="flex justify-end space-x-4 mt-8">
-                    <button type="button" id="deleteNoteBtn" class="bg-red-800/80 hover:bg-red-700/80 text-white font-bold py-2 px-4 rounded-lg hidden">Delete Note</button>
-                    <button type="button" id="cancelNote" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-lg">Cancel</button>
-                    <button type="submit" class="accent-gradient-bg hover:opacity-90 text-black font-bold py-2 px-4 rounded-lg">Save Note</button>
+                <div class="flex justify-between items-center mt-8">
+                    <div>
+                        <button type="button" id="deleteNoteBtn" class="bg-red-800/80 hover:bg-red-700/80 text-white font-bold py-2 px-4 rounded-lg hidden">Delete Note</button>
+                    </div>
+                    <div class="flex space-x-4">
+                        <button type="button" id="cancelNote" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-lg">Cancel</button>
+                        <button type="submit" class="accent-gradient-bg hover:opacity-90 text-black font-bold py-2 px-4 rounded-lg">Save Note</button>
+                    </div>
                 </div>
             </form>
         </div>
@@ -225,43 +242,41 @@
         let actionPriorityChart = null;
         let currentView = 'clients'; // 'clients', 'global', 'calendar', 'notes'
         let calendarDate = new Date();
-        let activeFolderId = 'all';
+        let noteQuillEditor = null;
+        // Note View State
+        let notesState = {
+            activeFolderId: 'all',
+            activeTag: null,
+            searchTerm: '',
+            sortBy: 'createdAt-desc'
+        };
         let timerInterval = null;
         let timerState = { running: false, startTime: 0, elapsedTime: 0 };
         let isProfileEditing = false;
 
         const ONBOARDING_CHECKLIST = [ { text: 'Kick-off call with client', completed: false, priority: 'High', dueDate: '' }, { text: 'Gain access to all required platforms', completed: false, priority: 'High', dueDate: '' }, { text: 'Define initial 30-day goals & KPIs', completed: false, priority: 'Medium', dueDate: '' }, ];
-        const NOTE_TEMPLATES = { 'Monthly Report Prep': '1. Compile all key metrics.\n2. Analyze trends and identify key takeaways.\n3. Prepare presentation slides.\n4. Schedule review meeting with client.', 'Content Brainstorm': '1. Review top-performing content.\n2. Analyze competitor content strategies.\n3. Brainstorm 10 new content ideas.\n4. Map ideas to content calendar.', };
+        const NOTE_TEMPLATES = { 'Monthly Report Prep': '<h3>Monthly Report Preparation</h3><ol><li>Compile all key metrics.</li><li>Analyze trends and identify key takeaways.</li><li>Prepare presentation slides.</li><li>Schedule review meeting with client.</li></ol>', 'Content Brainstorm': '<h3>Content Brainstorming</h3><ul><li>Review top-performing content.</li><li>Analyze competitor content strategies.</li><li>Brainstorm 10 new content ideas.</li><li>Map ideas to content calendar.</li></ul>', };
 
         // --- Data Layer ---
-        const getClients = () => { clients = JSON.parse(localStorage.getItem('clients')) || []; };
-        const saveClients = () => { localStorage.setItem('clients', JSON.stringify(clients)); };
-        const getNotes = () => { notes = JSON.parse(localStorage.getItem('notes')) || []; };
-        const saveNotes = () => { localStorage.setItem('notes', JSON.stringify(notes)); };
-        const getFolders = () => { folders = JSON.parse(localStorage.getItem('folders')) || []; };
-        const saveFolders = () => { localStorage.setItem('folders', JSON.stringify(folders)); };
+        const getClients = () => { clients = JSON.parse(localStorage.getItem('clients_v2')) || []; };
+        const saveClients = () => { localStorage.setItem('clients_v2', JSON.stringify(clients)); };
+        const getNotes = () => { notes = JSON.parse(localStorage.getItem('notes_v2')) || []; };
+        const saveNotes = () => { localStorage.setItem('notes_v2', JSON.stringify(notes)); };
+        const getFolders = () => { folders = JSON.parse(localStorage.getItem('folders_v2')) || []; };
+        const saveFolders = () => { localStorage.setItem('folders_v2', JSON.stringify(folders)); };
         
         const seedInitialData = () => {
+            if (localStorage.getItem('seeded_v2')) return;
             clients = [
                 {
                     id: 'client_1', name: 'QuantumLeap SaaS', niche: 'AI Productivity', tier: 'Gold', color: '#ffd700', status: 'active',
                     contact: { name: 'Jane Doe', email: 'jane@quantum.io' }, serviceType: 'SEO & Content Marketing', compensation: 'Monthly Retainer - R85,000', platforms: ['Website', 'YouTube', 'LinkedIn'],
                     analytics: { followers: 12500, engagementRate: 4.2, websiteTraffic: 22300, goals: { followers: 15000, engagementRate: 5.0, websiteTraffic: 25000 }, history: [ { date: '2025-03-01', followers: 8000, websiteTraffic: 15000 }, { date: '2025-04-01', followers: 9500, websiteTraffic: 16500 }, { date: '2025-05-01', followers: 10200, websiteTraffic: 18000 }, { date: '2025-06-01', followers: 11500, websiteTraffic: 20500 }, { date: '2025-07-01', followers: 12500, websiteTraffic: 22300 }, ], customMetrics: [{ id: 'cm_1', name: 'Demo Signups', value: 350, goal: 500 }] },
-                    actions: [ 
-                        { id: 'act_1', text: 'Launch new blog post series on AI ethics', completed: false, priority: 'High', dueDate: '2025-08-20', subtasks: [
-                            {id: 'sub_1', text: 'Draft post 1', completed: true},
-                            {id: 'sub_2', text: 'Design graphics', completed: false},
-                            {id: 'sub_3', text: 'Schedule promotion', completed: false},
-                        ]}, 
-                        { id: 'act_2', text: 'Optimize homepage for "productivity tool"', completed: true, priority: 'High', dueDate: '2025-08-01', subtasks: [] }, 
-                        { id: 'act_3', text: 'A/B test new ad creatives', completed: false, priority: 'Medium', dueDate: '2025-09-05', subtasks: [] }, 
-                        { id: 'act_4', text: 'Update Q3 roadmap', completed: false, priority: 'Low', dueDate: '2025-08-25', subtasks: [] }, 
-                    ],
+                    actions: [ { id: 'act_1', text: 'Launch new blog post series on AI ethics', completed: false, priority: 'High', dueDate: '2025-08-20', subtasks: [{id: 'sub_1', text: 'Draft post 1', completed: true},{id: 'sub_2', text: 'Design graphics', completed: false},{id: 'sub_3', text: 'Schedule promotion', completed: false},]}, { id: 'act_2', text: 'Optimize homepage for "productivity tool"', completed: true, priority: 'High', dueDate: '2025-08-01', subtasks: [] }, { id: 'act_3', text: 'A/B test new ad creatives', completed: false, priority: 'Medium', dueDate: '2025-09-05', subtasks: [] }, { id: 'act_4', text: 'Update Q3 roadmap', completed: false, priority: 'Low', dueDate: '2025-08-25', subtasks: [] }, ],
                     links: [{ label: 'Brand Guidelines', url: '#' }], winsLessons: 'Major win: Featured on TechCrunch.', competitors: [{ name: 'InnovateAI', followers: 15000, traffic: 30000 }],
                     team: [{id: 'tm_1', name: 'Alice', role: 'Lead SEO Strategist', duration: 'Ongoing', compensation: 'R40,000/mo', type: 'Internal'}],
                     milestones: [{ id:'ms_1', text: 'Q3 Product Launch', date: '2025-09-30', completed: false }, {id:'ms_2', text: 'Secure Series A Funding', date: '2025-12-31', completed: false }],
-                    financials: { expenses: [{id: 'exp_1', description: 'Ad Spend', amount: 15000, type: 'Ongoing'}] },
-                    timeLogs: []
+                    financials: { expenses: [{id: 'exp_1', description: 'Ad Spend', amount: 15000, type: 'Ongoing'}] }, timeLogs: []
                 },
                 {
                     id: 'client_2', name: 'Dr. Anya Sharma', niche: 'Holistic Health', tier: 'Silver', color: '#c0c0c0', status: 'active',
@@ -270,17 +285,13 @@
                     actions: [{ id: 'act_5', text: 'Collaborate with a fitness influencer', completed: false, priority: 'Medium', dueDate: '2025-09-01', subtasks: [] }], links: [], winsLessons: '', competitors: [], team: [], milestones: [], financials: { expenses: [] }, timeLogs: []
                 },
             ];
-            folders = [
-                { id: 'folder_1', name: 'Client Strategies' },
-                { id: 'folder_2', name: 'Meeting Minutes' },
-            ];
+            folders = [ { id: 'folder_1', name: 'Client Strategies' }, { id: 'folder_2', name: 'Meeting Minutes' }, ];
             notes = [
-                { id: 'note_1', title: 'Q4 Strategy Meeting', content: 'Discussed Q4 goals with QuantumLeap. Key focus on video content for YouTube and expanding LinkedIn presence. Budget for ads approved.', linkedClientIds: ['client_1'], folderId: 'folder_2' },
-                { id: 'note_2', title: 'Influencer Outreach Ideas', content: 'Potential collaborators for Dr. Sharma:\n- FitLife with Jess\n- Mindful Mike\n- The Yoga Hub', linkedClientIds: ['client_2'], folderId: 'folder_1' }
+                { id: 'note_1', title: 'Q4 Strategy Meeting', content: 'Discussed Q4 goals with QuantumLeap. Key focus on <strong>video content</strong> for YouTube and expanding LinkedIn presence. Budget for ads approved.', linkedClientIds: ['client_1'], folderId: 'folder_2', tags: ['#strategy', '#planning'], isPinned: true, createdAt: new Date('2025-07-15').toISOString(), updatedAt: new Date('2025-07-15').toISOString() },
+                { id: 'note_2', title: 'Influencer Outreach Ideas', content: 'Potential collaborators for Dr. Sharma:<ul><li>FitLife with Jess</li><li>Mindful Mike</li><li>The Yoga Hub</li></ul>', linkedClientIds: ['client_2'], folderId: 'folder_1', tags: ['#ideas', '#social-media'], isPinned: false, createdAt: new Date('2025-07-20').toISOString(), updatedAt: new Date('2025-07-20').toISOString() }
             ];
-            saveClients();
-            saveNotes();
-            saveFolders();
+            saveClients(); saveNotes(); saveFolders();
+            localStorage.setItem('seeded_v2', 'true');
         };
 
         const addClient = (clientData) => { const newClient = { id: `client_${Date.now()}`, status: 'active', analytics: { followers: 0, engagementRate: 0, websiteTraffic: 0, goals: {}, history: [], customMetrics: [] }, actions: document.getElementById('applyOnboarding').checked ? JSON.parse(JSON.stringify(ONBOARDING_CHECKLIST)) : [], links: [], winsLessons: '', competitors: [], team: [], milestones: [], timeLogs: [], financials: { expenses: [] }, ...clientData }; clients.push(newClient); saveClients(); return newClient; };
@@ -326,192 +337,138 @@
         };
 
         const renderClientList = () => { const showArchived = showArchivedEl.checked; const searchTerm = clientSearchEl.value.toLowerCase(); const filteredClients = clients.filter(c => (showArchived || c.status === 'active') && c.name.toLowerCase().includes(searchTerm)); clientListEl.innerHTML = filteredClients.map(client => { const isActive = client.id === activeClientId; return `<li class="sidebar-item cursor-pointer p-3 text-slate-300 ${isActive ? 'active' : ''}" data-client-id="${client.id}" style="border-left-color: ${isActive ? client.color : 'transparent'};"> ${client.name} ${client.status === 'archived' ? `<span class="text-xs text-slate-500 ml-2">(Archived)</span>` : ''} </li>`; }).join('') || '<li class="text-slate-500 px-4">No clients found.</li>'; };
-        const renderGlobalDashboard = () => {
-            let allActions = [];
-            clients.filter(c => c.status === 'active').forEach(client => (client.actions || []).forEach(action => !action.completed && allActions.push({ ...action, clientName: client.name, clientColor: client.color, clientId: client.id })));
-            
-            const today = new Date();
-            const endOfWeek = new Date();
-            endOfWeek.setDate(today.getDate() + (6 - today.getDay()));
-
-            const todayActions = allActions.filter(a => a.dueDate && new Date(a.dueDate).toDateString() === today.toDateString());
-            const weekActions = allActions.filter(a => a.dueDate && new Date(a.dueDate) > today && new Date(a.dueDate) <= endOfWeek);
-            const upcomingActions = allActions.filter(a => !a.dueDate || new Date(a.dueDate) > endOfWeek);
-
-            const renderSection = (title, actions) => {
-                let sectionHTML = `<div class="mb-8"><h3 class="text-2xl font-bold text-white mb-4">${title}</h3><div class="space-y-4">`;
-                if (actions.length > 0) {
-                    sectionHTML += actions.map(action => renderActionItem(action, action.clientId)).join('');
-                } else {
-                    sectionHTML += '<p class="text-slate-500">No tasks in this period.</p>';
-                }
-                sectionHTML += `</div></div>`;
-                return sectionHTML;
-            };
-
-            globalDashboardEl.innerHTML = `<h2 class="text-4xl font-bold text-white mb-6">Master To-Do List</h2>` + renderSection('Today', todayActions) + renderSection('This Week', weekActions) + renderSection('Upcoming', upcomingActions);
-        };
-        const renderClientDashboard = () => { const client = clients.find(c => c.id === activeClientId); if (!client) return; const tierColors = { Platinum: 'bg-purple-400/20 text-purple-300', Gold: 'bg-yellow-400/20 text-yellow-300', Silver: 'bg-slate-400/20 text-slate-300', Standard: 'bg-blue-400/20 text-blue-300' }; const linkedNotes = notes.filter(note => note.linkedClientIds.includes(client.id)); clientDashboardEl.innerHTML = `<div class="flex flex-wrap items-center justify-between mb-6 gap-4"><div class="flex items-center gap-4"><div class="w-3 h-12 rounded-full" style="background-color: ${client.color};"></div><h2 class="text-4xl font-bold text-white">${client.name}</h2><span class="px-3 py-1 rounded-full text-sm font-semibold ${tierColors[client.tier] || tierColors['Standard']}">${client.tier}</span></div><div><button id="generateReportBtn" class="bg-blue-800/50 hover:bg-blue-700/50 text-blue-300 font-bold py-2 px-4 rounded-lg mr-2">Generate Report</button><button id="archiveClientBtn" class="bg-red-800/50 hover:bg-red-700/50 text-red-300 font-bold py-2 px-4 rounded-lg">${client.status === 'active' ? 'Archive' : 'Unarchive'}</button></div></div><div id="metricsContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">${createMetricCard('Followers', client.analytics.followers, 'followers', client.analytics.goals.followers, '', false)}${createMetricCard('Engagement Rate', client.analytics.engagementRate, 'engagementRate', client.analytics.goals.engagementRate, '%', false)}${createMetricCard('Website Traffic', client.analytics.websiteTraffic, 'websiteTraffic', client.analytics.goals.websiteTraffic, '', false)}${(client.analytics.customMetrics || []).map(m => createMetricCard(m.name, m.value, m.id, m.goal, '', true)).join('')}<button id="addCustomMetricBtn" class="flex items-center justify-center glass-pane hover:bg-dark border-2 border-dashed border-border-color rounded-lg text-slate-400 transition h-full min-h-[160px]"><span class="text-2xl mr-2">+</span> Add Custom Metric</button></div><div class="glass-pane p-6 rounded-lg shadow-lg mb-8"><h3 class="text-xl font-semibold mb-4 text-white">Growth Trajectory</h3><div style="height: 250px;"><canvas id="analyticsChartCanvas"></canvas></div></div><div class="glass-pane p-6 rounded-lg shadow-lg mb-8"><h3 class="text-xl font-semibold mb-4 text-white">Milestone Roadmap</h3><div id="milestonesContainer" class="space-y-4">${renderMilestones(client.milestones)}</div><form id="newMilestoneForm" class="flex gap-2 mt-4"><input type="text" id="newMilestoneText" placeholder="New milestone..." class="p-2 rounded-lg flex-1"><input type="date" id="newMilestoneDate" class="p-2 rounded-lg text-slate-400"><button type="submit" class="accent-gradient-bg text-black font-bold p-2 rounded-lg">Add Milestone</button></form></div><div class="grid grid-cols-1 lg:grid-cols-2 gap-8"><div class="glass-pane p-6 rounded-lg shadow-lg"><div class="flex justify-between items-center mb-4"><h3 class="text-xl font-semibold text-white">Action Center</h3><select id="noteTemplateSelector" class="p-1 rounded-lg text-sm bg-dark border-border-color"><option value="">Use Template...</option>${Object.keys(NOTE_TEMPLATES).map(k => `<option value="${k}">${k}</option>`).join('')}</select></div><div class="mb-4 mx-auto" style="height: 150px; max-width: 250px;"><canvas id="actionPriorityChartCanvas"></canvas></div><div id="actionItems" class="space-y-3 mb-4">${(client.actions || []).map(action => renderActionItem(action, client.id)).join('')}</div><form id="newActionForm" class="grid grid-cols-1 md:grid-cols-4 gap-2"><input type="text" id="newActionInput" placeholder="New action..." class="md:col-span-2 p-3 rounded-lg"><input type="date" id="newActionDueDate" class="p-3 rounded-lg text-slate-400"><select id="newActionPriority" class="p-3 rounded-lg"><option>Medium</option><option>High</option><option>Low</option></select><button type="submit" class="md:col-span-4 accent-gradient-bg hover:opacity-90 text-black font-bold py-2 px-4 rounded-lg mt-2">Add Action</button></form></div><div class="space-y-8">${renderClientProfile(client)}<div class="glass-pane p-6 rounded-lg shadow-lg">${renderTeamHub(client)}</div><div class="glass-pane p-6 rounded-lg shadow-lg">${renderFinancialsHub(client)}</div><div class="glass-pane p-6 rounded-lg shadow-lg">${renderTimeTracker(client)}</div><div class="glass-pane p-6 rounded-lg shadow-lg"><h3 class="text-xl font-semibold mb-4 text-white">Linked Notes</h3><div class="space-y-2">${linkedNotes.length > 0 ? linkedNotes.map(n => `<div class="p-2 rounded-lg bg-dark cursor-pointer" data-note-id="${n.id}">${n.title}</div>`).join('') : '<p class="text-slate-500">No notes linked to this client.</p>'}</div></div><div class="glass-pane p-6 rounded-lg shadow-lg"><h3 class="text-xl font-semibold mb-4 text-white">Wins & Lessons</h3><textarea id="winsLessons" class="w-full h-24 p-3 rounded-lg">${client.winsLessons || ''}</textarea></div><div class="glass-pane p-6 rounded-lg shadow-lg"><h3 class="text-xl font-semibold mb-4 text-white">Client Documents & Links</h3><div id="keyLinks" class="space-y-2 mb-4">${renderKeyLinks(client.links)}</div><form id="newLinkForm" class="flex gap-2"><input type="text" id="newLinkLabel" placeholder="Document or Link Name" class="p-2 rounded-lg flex-1"><input type="url" id="newLinkUrl" placeholder="https://..." class="p-2 rounded-lg flex-1"><button type="submit" class="accent-gradient-bg text-black font-bold p-2 rounded-lg">Add</button></form></div><div class="glass-pane p-6 rounded-lg shadow-lg"><h3 class="text-xl font-semibold mb-4 text-white">Competitor Watch</h3><div id="competitors" class="space-y-2 mb-4">${renderCompetitors(client.competitors)}</div><form id="newCompetitorForm" class="grid grid-cols-3 gap-2"><input type="text" id="newCompetitorName" placeholder="Competitor Name" class="p-2 rounded-lg"><input type="number" id="newCompetitorFollowers" placeholder="Followers" class="p-2 rounded-lg"><input type="number" id="newCompetitorTraffic" placeholder="Traffic" class="p-2 rounded-lg"><button type="submit" class="col-span-3 accent-gradient-bg text-black font-bold p-2 rounded-lg mt-2">Add Competitor</button></form></div></div></div>`; addDashboardEventListeners(); };
+        const renderGlobalDashboard = () => { let allActions = []; clients.filter(c => c.status === 'active').forEach(client => (client.actions || []).forEach(action => !action.completed && allActions.push({ ...action, clientName: client.name, clientColor: client.color, clientId: client.id }))); const today = new Date(); const endOfWeek = new Date(); endOfWeek.setDate(today.getDate() + (6 - today.getDay())); const todayActions = allActions.filter(a => a.dueDate && new Date(a.dueDate).toDateString() === today.toDateString()); const weekActions = allActions.filter(a => a.dueDate && new Date(a.dueDate) > today && new Date(a.dueDate) <= endOfWeek); const upcomingActions = allActions.filter(a => !a.dueDate || new Date(a.dueDate) > endOfWeek); const renderSection = (title, actions) => { let sectionHTML = `<div class="mb-8"><h3 class="text-2xl font-bold text-white mb-4">${title}</h3><div class="space-y-4">`; if (actions.length > 0) { sectionHTML += actions.map(action => renderActionItem(action, action.clientId)).join(''); } else { sectionHTML += '<p class="text-slate-500">No tasks in this period.</p>'; } sectionHTML += `</div></div>`; return sectionHTML; }; globalDashboardEl.innerHTML = `<h2 class="text-4xl font-bold text-white mb-6">Master To-Do List</h2>` + renderSection('Today', todayActions) + renderSection('This Week', weekActions) + renderSection('Upcoming', upcomingActions); };
+        const renderClientDashboard = () => { const client = clients.find(c => c.id === activeClientId); if (!client) return; const tierColors = { Platinum: 'bg-purple-400/20 text-purple-300', Gold: 'bg-yellow-400/20 text-yellow-300', Silver: 'bg-slate-400/20 text-slate-300', Standard: 'bg-blue-400/20 text-blue-300' }; const linkedNotes = notes.filter(note => note.linkedClientIds.includes(client.id)); clientDashboardEl.innerHTML = `<div class="flex flex-wrap items-center justify-between mb-6 gap-4"><div class="flex items-center gap-4"><div class="w-3 h-12 rounded-full" style="background-color: ${client.color};"></div><h2 class="text-4xl font-bold text-white">${client.name}</h2><span class="px-3 py-1 rounded-full text-sm font-semibold ${tierColors[client.tier] || tierColors['Standard']}">${client.tier}</span></div><div><button id="generateReportBtn" class="bg-blue-800/50 hover:bg-blue-700/50 text-blue-300 font-bold py-2 px-4 rounded-lg mr-2">Generate Report</button><button id="archiveClientBtn" class="bg-red-800/50 hover:bg-red-700/50 text-red-300 font-bold py-2 px-4 rounded-lg">${client.status === 'active' ? 'Archive' : 'Unarchive'}</button></div></div><div id="metricsContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">${createMetricCard('Followers', client.analytics.followers, 'followers', client.analytics.goals.followers, '', false)}${createMetricCard('Engagement Rate', client.analytics.engagementRate, 'engagementRate', client.analytics.goals.engagementRate, '%', false)}${createMetricCard('Website Traffic', client.analytics.websiteTraffic, 'websiteTraffic', client.analytics.goals.websiteTraffic, '', false)}${(client.analytics.customMetrics || []).map(m => createMetricCard(m.name, m.value, m.id, m.goal, '', true)).join('')}<button id="addCustomMetricBtn" class="flex items-center justify-center glass-pane hover:bg-dark border-2 border-dashed border-border-color rounded-lg text-slate-400 transition h-full min-h-[160px]"><span class="text-2xl mr-2">+</span> Add Custom Metric</button></div><div class="glass-pane p-6 rounded-lg shadow-lg mb-8"><h3 class="text-xl font-semibold mb-4 text-white">Growth Trajectory</h3><div style="height: 250px;"><canvas id="analyticsChartCanvas"></canvas></div></div><div class="glass-pane p-6 rounded-lg shadow-lg mb-8"><h3 class="text-xl font-semibold mb-4 text-white">Milestone Roadmap</h3><div id="milestonesContainer" class="space-y-4">${renderMilestones(client.milestones)}</div><form id="newMilestoneForm" class="flex gap-2 mt-4"><input type="text" id="newMilestoneText" placeholder="New milestone..." class="p-2 rounded-lg flex-1"><input type="date" id="newMilestoneDate" class="p-2 rounded-lg text-slate-400"><button type="submit" class="accent-gradient-bg text-black font-bold p-2 rounded-lg">Add Milestone</button></form></div><div class="grid grid-cols-1 lg:grid-cols-2 gap-8"><div class="glass-pane p-6 rounded-lg shadow-lg"><div class="flex justify-between items-center mb-4"><h3 class="text-xl font-semibold text-white">Action Center</h3><select id="noteTemplateSelector" class="p-1 rounded-lg text-sm bg-dark border-border-color"><option value="">Use Template...</option>${Object.keys(NOTE_TEMPLATES).map(k => `<option value="${k}">${k}</option>`).join('')}</select></div><div class="mb-4 mx-auto" style="height: 150px; max-width: 250px;"><canvas id="actionPriorityChartCanvas"></canvas></div><div id="actionItems" class="space-y-3 mb-4">${(client.actions || []).map(action => renderActionItem(action, client.id)).join('')}</div><form id="newActionForm" class="grid grid-cols-1 md:grid-cols-4 gap-2"><input type="text" id="newActionInput" placeholder="New action..." class="md:col-span-2 p-3 rounded-lg"><input type="date" id="newActionDueDate" class="p-3 rounded-lg text-slate-400"><select id="newActionPriority" class="p-3 rounded-lg"><option>Medium</option><option>High</option><option>Low</option></select><button type="submit" class="md:col-span-4 accent-gradient-bg hover:opacity-90 text-black font-bold py-2 px-4 rounded-lg mt-2">Add Action</button></form></div><div class="space-y-8">${renderClientProfile(client)}<div class="glass-pane p-6 rounded-lg shadow-lg">${renderTeamHub(client)}</div><div class="glass-pane p-6 rounded-lg shadow-lg">${renderFinancialsHub(client)}</div><div class="glass-pane p-6 rounded-lg shadow-lg">${renderTimeTracker(client)}</div><div class="glass-pane p-6 rounded-lg shadow-lg"><h3 class="text-xl font-semibold mb-4 text-white">Linked Notes</h3><div class="space-y-2">${linkedNotes.length > 0 ? linkedNotes.map(n => `<div class="p-2 rounded-lg bg-dark cursor-pointer note-link" data-note-id="${n.id}">${n.title}</div>`).join('') : '<p class="text-slate-500">No notes linked to this client.</p>'}</div></div><div class="glass-pane p-6 rounded-lg shadow-lg"><h3 class="text-xl font-semibold mb-4 text-white">Wins & Lessons</h3><textarea id="winsLessons" class="w-full h-24 p-3 rounded-lg">${client.winsLessons || ''}</textarea></div><div class="glass-pane p-6 rounded-lg shadow-lg"><h3 class="text-xl font-semibold mb-4 text-white">Client Documents & Links</h3><div id="keyLinks" class="space-y-2 mb-4">${renderKeyLinks(client.links)}</div><form id="newLinkForm" class="flex gap-2"><input type="text" id="newLinkLabel" placeholder="Document or Link Name" class="p-2 rounded-lg flex-1"><input type="url" id="newLinkUrl" placeholder="https://..." class="p-2 rounded-lg flex-1"><button type="submit" class="accent-gradient-bg text-black font-bold p-2 rounded-lg">Add</button></form></div><div class="glass-pane p-6 rounded-lg shadow-lg"><h3 class="text-xl font-semibold mb-4 text-white">Competitor Watch</h3><div id="competitors" class="space-y-2 mb-4">${renderCompetitors(client.competitors)}</div><form id="newCompetitorForm" class="grid grid-cols-3 gap-2"><input type="text" id="newCompetitorName" placeholder="Competitor Name" class="p-2 rounded-lg"><input type="number" id="newCompetitorFollowers" placeholder="Followers" class="p-2 rounded-lg"><input type="number" id="newCompetitorTraffic" placeholder="Traffic" class="p-2 rounded-lg"><button type="submit" class="col-span-3 accent-gradient-bg text-black font-bold p-2 rounded-lg mt-2">Add Competitor</button></form></div></div></div>`; addDashboardEventListeners(); };
         const createMetricCard = (title, value, key, goal, unit = '', isCustom) => { const goalValue = parseFloat(goal) || 0; const progress = goalValue > 0 ? (value / goalValue) * 100 : 0; return `<div class="glass-pane p-6 rounded-lg shadow-lg draggable" draggable="true" data-metric-id="${key}"><div class="flex justify-between items-center"><h4 class="text-slate-400 font-medium">${title}</h4>${isCustom ? `<button data-delete-metric-id="${key}" class="text-red-500 text-lg">×</button>` : ''}</div><div class="text-4xl font-bold my-2 text-white"><input type="number" value="${value}" data-metric="${key}" class="w-full bg-transparent focus:outline-none p-1"></div><div class="text-sm text-slate-400 mb-2">Goal: <input type="number" placeholder="Set Goal" value="${goal || ''}" data-goal="${key}" class="w-24 bg-transparent focus:outline-none p-1 rounded focus:bg-dark"> ${unit}</div><div class="progress-bar w-full h-2 rounded-full"><div class="progress-bar-fill h-2 rounded-full" style="width: ${Math.min(progress, 100)}%;"></div></div></div>`; };
-        const renderActionItem = (action, clientId) => {
-            const client = clients.find(c => c.id === clientId);
-            const subtasks = action.subtasks || [];
-            const completedSubtasks = subtasks.filter(st => st.completed).length;
-            const progress = subtasks.length > 0 ? (completedSubtasks / subtasks.length) * 100 : (action.completed ? 100 : 0);
-            const priorityColors = {'High':'border-red-500','Medium':'border-yellow-500','Low':'border-blue-500'};
-            return `
-            <div class="p-3 rounded-lg bg-dark border-l-4 ${priorityColors[action.priority] || 'border-slate-500'}">
-                <div class="flex items-center justify-between">
-                    <div class="flex-1"><label class="flex items-center space-x-3"><input type="checkbox" data-action-id="${action.id}" data-client-id="${clientId}" ${action.completed ? 'checked' : ''} class="form-checkbox h-5 w-5 text-accent-dark bg-dark border-border-color rounded focus:ring-accent-dark"><span class="${action.completed ? 'line-through text-slate-500' : 'text-slate-200'}">${action.text}</span></label></div>
-                    <div class="text-sm text-slate-400 mr-4">${action.dueDate ? new Date(action.dueDate).toLocaleDateString() : 'No date'}</div>
-                    ${client ? `<span class="font-semibold text-sm mr-4" style="color: ${client.color};">${client.name}</span>` : ''}
-                    <button data-delete-action-id="${action.id}" data-client-id="${clientId}" class="text-red-500 hover:text-red-400 font-bold text-lg">×</button>
-                </div>
-                <div class="pl-8 mt-2">
-                    <div class="progress-bar w-full h-1 rounded-full mb-2"><div class="progress-bar-fill h-1 rounded-full" style="width: ${progress}%;"></div></div>
-                    <div class="space-y-1">
-                        ${subtasks.map(st => `
-                            <label class="flex items-center space-x-2 text-sm">
-                                <input type="checkbox" data-subtask-id="${st.id}" data-action-id="${action.id}" data-client-id="${clientId}" ${st.completed ? 'checked' : ''} class="form-checkbox h-4 w-4 text-accent-dark bg-dark border-border-color rounded">
-                                <span class="${st.completed ? 'line-through text-slate-500' : 'text-slate-300'}">${st.text}</span>
-                            </label>
-                        `).join('')}
-                    </div>
-                    <form class="new-subtask-form flex gap-2 mt-2" data-action-id="${action.id}" data-client-id="${clientId}">
-                        <input type="text" placeholder="Add sub-task..." class="new-subtask-input flex-grow p-1 text-sm rounded-md">
-                        <button type="submit" class="text-xs accent-gradient-bg text-black font-bold px-2 rounded-md">Add</button>
-                    </form>
-                </div>
-            </div>`;
-        };
+        const renderActionItem = (action, clientId) => { const client = clients.find(c => c.id === clientId); const subtasks = action.subtasks || []; const completedSubtasks = subtasks.filter(st => st.completed).length; const progress = subtasks.length > 0 ? (completedSubtasks / subtasks.length) * 100 : (action.completed ? 100 : 0); const priorityColors = {'High':'border-red-500','Medium':'border-yellow-500','Low':'border-blue-500'}; return ` <div class="p-3 rounded-lg bg-dark border-l-4 ${priorityColors[action.priority] || 'border-slate-500'}"> <div class="flex items-center justify-between"> <div class="flex-1"><label class="flex items-center space-x-3"><input type="checkbox" data-action-id="${action.id}" data-client-id="${clientId}" ${action.completed ? 'checked' : ''} class="form-checkbox h-5 w-5 text-accent-dark bg-dark border-border-color rounded focus:ring-accent-dark"><span class="${action.completed ? 'line-through text-slate-500' : 'text-slate-200'}">${action.text}</span></label></div> <div class="text-sm text-slate-400 mr-4">${action.dueDate ? new Date(action.dueDate).toLocaleDateString() : 'No date'}</div> ${client ? `<span class="font-semibold text-sm mr-4" style="color: ${client.color};">${client.name}</span>` : ''} <button data-delete-action-id="${action.id}" data-client-id="${clientId}" class="text-red-500 hover:text-red-400 font-bold text-lg">×</button> </div> <div class="pl-8 mt-2"> <div class="progress-bar w-full h-1 rounded-full mb-2"><div class="progress-bar-fill h-1 rounded-full" style="width: ${progress}%;"></div></div> <div class="space-y-1"> ${subtasks.map(st => ` <label class="flex items-center space-x-2 text-sm"> <input type="checkbox" data-subtask-id="${st.id}" data-action-id="${action.id}" data-client-id="${clientId}" ${st.completed ? 'checked' : ''} class="form-checkbox h-4 w-4 text-accent-dark bg-dark border-border-color rounded"> <span class="${st.completed ? 'line-through text-slate-500' : 'text-slate-300'}">${st.text}</span> </label> `).join('')} </div> <form class="new-subtask-form flex gap-2 mt-2" data-action-id="${action.id}" data-client-id="${clientId}"> <input type="text" placeholder="Add sub-task..." class="new-subtask-input flex-grow p-1 text-sm rounded-md"> <button type="submit" class="text-xs accent-gradient-bg text-black font-bold px-2 rounded-md">Add</button> </form> </div> </div>`; };
         const renderKeyLinks = (links) => (links || []).map((link, i) => `<div class="flex items-center justify-between"><a href="${link.url}" target="_blank" class="text-accent-light hover:underline">${link.label}</a><button data-delete-link-index="${i}" class="text-red-500 text-lg">×</button></div>`).join('') || '<p class="text-slate-500">No documents or links added.</p>';
         const renderCompetitors = (comps) => (comps || []).map((c, i) => `<div class="grid grid-cols-3 gap-2 text-sm"><span class="text-slate-300">${c.name}</span><span>${c.followers.toLocaleString()} followers</span><span>${c.traffic.toLocaleString()} traffic</span></div>`).join('') || '<p class="text-slate-500">No competitors added.</p>';
         const renderMilestones = (milestones) => (milestones || []).sort((a,b) => new Date(a.date) - new Date(b.date)).map(m => `<div class="flex items-center gap-4"><input type="checkbox" data-milestone-id="${m.id}" ${m.completed ? 'checked' : ''} class="form-checkbox h-5 w-5 text-accent-dark bg-dark border-border-color rounded"><div class="flex-1"><p class="${m.completed ? 'line-through text-slate-500' : ''}">${m.text}</p><p class="text-sm text-slate-400">${new Date(m.date).toLocaleDateString()}</p></div></div>`).join('') || '<p class="text-slate-500">No milestones set.</p>';
-        const renderTeamHub = (client) => {
-            const team = client.team || [];
-            let teamHTML = `<h3 class="text-xl font-semibold mb-4 text-white">Project Team</h3><div id="teamMemberList" class="space-y-3 mb-4">`;
-            if (team.length > 0) {
-                teamHTML += team.map(member => `
-                    <div class="p-3 rounded-lg bg-dark">
-                        <div class="flex justify-between items-start">
-                            <div>
-                                <h4 class="font-bold text-white">${member.name} <span class="text-xs font-normal px-2 py-1 rounded-full ${member.type === 'Internal' ? 'bg-green-500/20 text-green-300' : 'bg-purple-500/20 text-purple-300'}">${member.type}</span></h4>
-                                <p class="text-sm text-slate-400">${member.role}</p>
-                            </div>
-                            <button data-delete-team-id="${member.id}" class="text-red-500 hover:text-red-400 font-bold text-lg">×</button>
-                        </div>
-                        <div class="text-sm text-slate-300 mt-2">
-                            <p><strong>Duration:</strong> ${member.duration}</p>
-                            <p><strong>Compensation:</strong> ${member.compensation}</p>
-                        </div>
-                    </div>
-                `).join('');
-            } else {
-                teamHTML += `<p class="text-slate-500">No team members assigned.</p>`;
-            }
-            teamHTML += `</div><form id="newTeamMemberForm" class="space-y-2"><div class="grid grid-cols-2 gap-2"><input type="text" id="newTeamMemberName" placeholder="Name" class="p-2 rounded-lg"><input type="text" id="newTeamMemberRole" placeholder="Role" class="p-2 rounded-lg"></div><div class="grid grid-cols-2 gap-2"><input type="text" id="newTeamMemberDuration" placeholder="Duration" class="p-2 rounded-lg"><input type="text" id="newTeamMemberCompensation" placeholder="Compensation (ZAR)" class="p-2 rounded-lg"></div><select id="newTeamMemberType" class="p-2 rounded-lg w-full"><option value="Internal">Internal</option><option value="Outsourced">Outsourced</option></select><button type="submit" class="w-full accent-gradient-bg text-black font-bold p-2 rounded-lg mt-2">Add Team Member</button></form>`;
-            return teamHTML;
-        };
-        const renderClientProfile = (client) => {
-            return `
-            <div id="clientProfileCard" class="glass-pane p-6 rounded-lg shadow-lg profile-view">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-xl font-semibold text-white">Client Profile</h3>
-                    <button id="editProfileBtn" class="accent-gradient-bg text-black text-sm font-bold py-1 px-3 rounded-lg">Edit Profile</button>
-                </div>
-                <div class="space-y-4 text-slate-400">
-                    <div>
-                        <h4 class="font-semibold text-slate-300">Primary Contact</h4>
-                        <p class="profile-view-field">${client.contact.name || 'N/A'} - ${client.contact.email || 'N/A'}</p>
-                        <div class="profile-edit-field grid grid-cols-2 gap-2">
-                            <input type="text" id="editContactName" value="${client.contact.name || ''}" class="p-2 rounded-lg">
-                            <input type="email" id="editContactEmail" value="${client.contact.email || ''}" class="p-2 rounded-lg">
-                        </div>
-                    </div>
-                    <div>
-                        <h4 class="font-semibold text-slate-300">Service Agreement</h4>
-                        <p class="profile-view-field"><strong>Service:</strong> ${client.serviceType || 'N/A'}</p>
-                        <input type="text" id="editServiceType" value="${client.serviceType || ''}" class="profile-edit-field p-2 rounded-lg w-full">
-                        <p class="profile-view-field"><strong>Compensation:</strong> ${client.compensation || 'N/A'}</p>
-                        <input type="text" id="editCompensation" value="${client.compensation || ''}" class="profile-edit-field p-2 rounded-lg w-full mt-1">
-                    </div>
-                    <div>
-                        <h4 class="font-semibold text-slate-300">Active Platforms</h4>
-                        <div class="profile-view-field flex flex-wrap gap-2 mt-2">
-                            ${(client.platforms && client.platforms.length) ? client.platforms.map(p => `<span class="bg-dark px-2 py-1 rounded-full text-xs">${p}</span>`).join('') : '<p>No platforms specified.</p>'}
-                        </div>
-                        <div id="editPlatforms" class="profile-edit-field grid grid-cols-2 sm:grid-cols-3 gap-2 mt-2">
-                            <label class="flex items-center space-x-2"><input type="checkbox" value="Instagram" ${client.platforms.includes('Instagram') ? 'checked' : ''}><span>Instagram</span></label>
-                            <label class="flex items-center space-x-2"><input type="checkbox" value="Facebook" ${client.platforms.includes('Facebook') ? 'checked' : ''}><span>Facebook</span></label>
-                            <label class="flex items-center space-x-2"><input type="checkbox" value="TikTok" ${client.platforms.includes('TikTok') ? 'checked' : ''}><span>TikTok</span></label>
-                            <label class="flex items-center space-x-2"><input type="checkbox" value="YouTube" ${client.platforms.includes('YouTube') ? 'checked' : ''}><span>YouTube</span></label>
-                            <label class="flex items-center space-x-2"><input type="checkbox" value="LinkedIn" ${client.platforms.includes('LinkedIn') ? 'checked' : ''}><span>LinkedIn</span></label>
-                            <label class="flex items-center space-x-2"><input type="checkbox" value="Website" ${client.platforms.includes('Website') ? 'checked' : ''}><span>Website</span></label>
-                        </div>
-                    </div>
-                </div>
-            </div>`;
-        };
+        const renderTeamHub = (client) => { const team = client.team || []; let teamHTML = `<h3 class="text-xl font-semibold mb-4 text-white">Project Team</h3><div id="teamMemberList" class="space-y-3 mb-4">`; if (team.length > 0) { teamHTML += team.map(member => ` <div class="p-3 rounded-lg bg-dark"> <div class="flex justify-between items-start"> <div> <h4 class="font-bold text-white">${member.name} <span class="text-xs font-normal px-2 py-1 rounded-full ${member.type === 'Internal' ? 'bg-green-500/20 text-green-300' : 'bg-purple-500/20 text-purple-300'}">${member.type}</span></h4> <p class="text-sm text-slate-400">${member.role}</p> </div> <button data-delete-team-id="${member.id}" class="text-red-500 hover:text-red-400 font-bold text-lg">×</button> </div> <div class="text-sm text-slate-300 mt-2"> <p><strong>Duration:</strong> ${member.duration}</p> <p><strong>Compensation:</strong> ${member.compensation}</p> </div> </div> `).join(''); } else { teamHTML += `<p class="text-slate-500">No team members assigned.</p>`; } teamHTML += `</div><form id="newTeamMemberForm" class="space-y-2"><div class="grid grid-cols-2 gap-2"><input type="text" id="newTeamMemberName" placeholder="Name" class="p-2 rounded-lg"><input type="text" id="newTeamMemberRole" placeholder="Role" class="p-2 rounded-lg"></div><div class="grid grid-cols-2 gap-2"><input type="text" id="newTeamMemberDuration" placeholder="Duration" class="p-2 rounded-lg"><input type="text" id="newTeamMemberCompensation" placeholder="Compensation (ZAR)" class="p-2 rounded-lg"></div><select id="newTeamMemberType" class="p-2 rounded-lg w-full"><option value="Internal">Internal</option><option value="Outsourced">Outsourced</option></select><button type="submit" class="w-full accent-gradient-bg text-black font-bold p-2 rounded-lg mt-2">Add Team Member</button></form>`; return teamHTML; };
+        const renderClientProfile = (client) => { return ` <div id="clientProfileCard" class="glass-pane p-6 rounded-lg shadow-lg profile-view"> <div class="flex justify-between items-center mb-4"> <h3 class="text-xl font-semibold text-white">Client Profile</h3> <button id="editProfileBtn" class="accent-gradient-bg text-black text-sm font-bold py-1 px-3 rounded-lg">Edit Profile</button> </div> <div class="space-y-4 text-slate-400"> <div> <h4 class="font-semibold text-slate-300">Primary Contact</h4> <p class="profile-view-field">${client.contact.name || 'N/A'} - ${client.contact.email || 'N/A'}</p> <div class="profile-edit-field grid grid-cols-2 gap-2"> <input type="text" id="editContactName" value="${client.contact.name || ''}" class="p-2 rounded-lg"> <input type="email" id="editContactEmail" value="${client.contact.email || ''}" class="p-2 rounded-lg"> </div> </div> <div> <h4 class="font-semibold text-slate-300">Service Agreement</h4> <p class="profile-view-field"><strong>Service:</strong> ${client.serviceType || 'N/A'}</p> <input type="text" id="editServiceType" value="${client.serviceType || ''}" class="profile-edit-field p-2 rounded-lg w-full"> <p class="profile-view-field"><strong>Compensation:</strong> ${client.compensation || 'N/A'}</p> <input type="text" id="editCompensation" value="${client.compensation || ''}" class="profile-edit-field p-2 rounded-lg w-full mt-1"> </div> <div> <h4 class="font-semibold text-slate-300">Active Platforms</h4> <div class="profile-view-field flex flex-wrap gap-2 mt-2"> ${(client.platforms && client.platforms.length) ? client.platforms.map(p => `<span class="bg-dark px-2 py-1 rounded-full text-xs">${p}</span>`).join('') : '<p>No platforms specified.</p>'} </div> <div id="editPlatforms" class="profile-edit-field grid grid-cols-2 sm:grid-cols-3 gap-2 mt-2"> <label class="flex items-center space-x-2"><input type="checkbox" value="Instagram" ${client.platforms.includes('Instagram') ? 'checked' : ''}><span>Instagram</span></label> <label class="flex items-center space-x-2"><input type="checkbox" value="Facebook" ${client.platforms.includes('Facebook') ? 'checked' : ''}><span>Facebook</span></label> <label class="flex items-center space-x-2"><input type="checkbox" value="TikTok" ${client.platforms.includes('TikTok') ? 'checked' : ''}><span>TikTok</span></label> <label class="flex items-center space-x-2"><input type="checkbox" value="YouTube" ${client.platforms.includes('YouTube') ? 'checked' : ''}><span>YouTube</span></label> <label class="flex items-center space-x-2"><input type="checkbox" value="LinkedIn" ${client.platforms.includes('LinkedIn') ? 'checked' : ''}><span>LinkedIn</span></label> <label class="flex items-center space-x-2"><input type="checkbox" value="Website" ${client.platforms.includes('Website') ? 'checked' : ''}><span>Website</span></label> </div> </div> </div> </div>`; };
         const renderAnalyticsChart = (client) => { if (analyticsChart) analyticsChart.destroy(); const canvas = document.getElementById('analyticsChartCanvas'); if (!canvas) return; const ctx = canvas.getContext('2d'); const history = client.analytics.history || []; if (history.length === 0) { canvas.style.display = 'none'; return; } canvas.style.display = 'block'; const accentLight = getComputedStyle(document.body).getPropertyValue('--accent-light').trim(); const textSecondary = getComputedStyle(document.body).getPropertyValue('--text-secondary').trim(); const gradient = ctx.createLinearGradient(0, 0, 0, canvas.offsetHeight); gradient.addColorStop(0, colorToRgba(accentLight, 0.4)); gradient.addColorStop(1, colorToRgba(accentLight, 0)); analyticsChart = new Chart(ctx, { type: 'line', data: { labels: history.map(h => new Date(h.date).toLocaleDateString('en-US', { month: 'short' })), datasets: [ { label: 'Followers', data: history.map(h => h.followers), borderColor: accentLight, backgroundColor: gradient, tension: 0.4, fill: true, yAxisID: 'y' }, { label: 'Website Traffic', data: history.map(h => h.websiteTraffic), borderColor: textSecondary, tension: 0.4, fill: false, yAxisID: 'y1' } ] }, options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, plugins: { legend: { labels: { color: '#9ca3af' } } }, scales: { y: { type: 'linear', display: true, position: 'left', ticks: { color: accentLight }, grid: { color: '#374151' } }, y1: { type: 'linear', display: true, position: 'right', ticks: { color: textSecondary }, grid: { drawOnChartArea: false } }, x: { ticks: { color: '#9ca3af' }, grid: { color: '#374151' } } } } }); };
         const renderActionPriorityChart = (client) => { if (actionPriorityChart) actionPriorityChart.destroy(); const canvas = document.getElementById('actionPriorityChartCanvas'); if (!canvas) return; const ctx = canvas.getContext('2d'); const actions = client.actions || []; const priorityCounts = { High: 0, Medium: 0, Low: 0 }; actions.forEach(action => { if (!action.completed && priorityCounts.hasOwnProperty(action.priority)) { priorityCounts[action.priority]++; } }); const total = Object.values(priorityCounts).reduce((a, b) => a + b, 0); if (total === 0) { canvas.style.display = 'none'; return; } canvas.style.display = 'block'; actionPriorityChart = new Chart(ctx, { type: 'doughnut', data: { labels: ['High', 'Medium', 'Low'], datasets: [{ data: [priorityCounts.High, priorityCounts.Medium, priorityCounts.Low], backgroundColor: ['#ef4444', '#f59e0b', '#3b82f6'], borderColor: '#1f2937', borderWidth: 2 }] }, options: { responsive: true, maintainAspectRatio: false, cutout: '70%', plugins: { legend: { position: 'right', labels: { color: '#9ca3af', boxWidth: 12 } } } } }); };
         const renderCalendar = () => { const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]; const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']; let firstDay = new Date(calendarDate.getFullYear(), calendarDate.getMonth(), 1).getDay(); let daysInMonth = new Date(calendarDate.getFullYear(), calendarDate.getMonth() + 1, 0).getDate(); let allEvents = []; clients.forEach(c => { (c.actions || []).filter(a => a.dueDate).forEach(a => allEvents.push({ date: new Date(a.dueDate), text: a.text, client: c })); (c.milestones || []).filter(m => m.date).forEach(m => allEvents.push({ date: new Date(m.date), text: `MILESTONE: ${m.text}`, client: c })); }); let calendarHTML = `<div class="glass-pane p-6 rounded-lg shadow-lg"><div class="flex justify-between items-center mb-4"><button id="prevMonth" class="p-2 rounded-lg hover:bg-dark">&lt;</button><h2 class="text-2xl font-bold">${monthNames[calendarDate.getMonth()]} ${calendarDate.getFullYear()}</h2><button id="nextMonth" class="p-2 rounded-lg hover:bg-dark">&gt;</button></div><div class="grid grid-cols-7 gap-2 text-center text-slate-400 mb-2">${daysOfWeek.map(day => `<div>${day}</div>`).join('')}</div><div id="calendarGrid" class="grid grid-cols-7 gap-2">`; for(let i = 0; i < firstDay; i++) { calendarHTML += '<div></div>'; } for(let day = 1; day <= daysInMonth; day++) { const dayDate = new Date(calendarDate.getFullYear(), calendarDate.getMonth(), day); const dayEvents = allEvents.filter(e => e.date.toDateString() === dayDate.toDateString()); calendarHTML += `<div class="p-2 border border-border-color rounded-lg h-28 overflow-y-auto relative ${dayDate.toDateString() === new Date().toDateString() ? 'bg-accent-dark/20' : ''}" data-date="${dayDate.toISOString()}"><div class="font-bold text-right">${day}</div><div class="space-y-1 mt-1">${dayEvents.map(e => `<div class="text-xs p-1 rounded" style="background-color:${e.client.color}; color: #000;">${e.text}</div>`).join('')}</div></div>`; } calendarHTML += '</div></div>'; calendarViewEl.innerHTML = calendarHTML; document.getElementById('prevMonth').addEventListener('click', () => { calendarDate.setMonth(calendarDate.getMonth() - 1); renderCalendar(); }); document.getElementById('nextMonth').addEventListener('click', () => { calendarDate.setMonth(calendarDate.getMonth() + 1); renderCalendar(); }); };
-        const renderTimeTracker = (client) => {
-            const totalHours = (client.timeLogs || []).reduce((acc, log) => acc + log.hours, 0);
-            return `
-            <h3 class="text-xl font-semibold mb-4 text-white">Time Tracker</h3>
-            <div class="text-center mb-4">
-                <div id="timerDisplay" class="text-5xl font-bold tracking-widest">${formatTime(timerState.elapsedTime)}</div>
-                <div class="text-slate-400">Total Logged: ${totalHours.toFixed(2)} hours</div>
-            </div>
-            <div class="flex justify-center gap-4 mb-4">
-                <button id="startTimerBtn" class="bg-green-500/80 hover:bg-green-400/80 p-3 rounded-full w-12 h-12"><i class="fa-solid fa-play"></i></button>
-                <button id="pauseTimerBtn" class="bg-yellow-500/80 hover:bg-yellow-400/80 p-3 rounded-full w-12 h-12"><i class="fa-solid fa-pause"></i></button>
-                <button id="resetTimerBtn" class="bg-red-500/80 hover:bg-red-400/80 p-3 rounded-full w-12 h-12"><i class="fa-solid fa-stop"></i></button>
-            </div>
-            <button id="logTimeBtn" class="w-full accent-gradient-bg text-black font-bold p-2 rounded-lg">Log Time</button>`;
-        };
-        const renderFinancialsHub = (client) => {
-            const financials = client.financials || { expenses: [] };
-            const totalExpenses = financials.expenses.reduce((acc, ex) => acc + ex.amount, 0);
-            const income = parseFloat(client.compensation.replace(/[^0-9.-]+/g,"")) || 0;
-            const netProfit = income - totalExpenses;
-
-            let financialsHTML = `<h3 class="text-xl font-semibold mb-4 text-white">Project Financials</h3>
-            <div class="grid grid-cols-2 gap-4 mb-4 text-center">
-                <div><p class="text-slate-400 text-sm">Total Expenses</p><p class="text-2xl font-bold text-red-400">R ${totalExpenses.toLocaleString()}</p></div>
-                <div><p class="text-slate-400 text-sm">Net Profit</p><p class="text-2xl font-bold ${netProfit >= 0 ? 'text-green-400' : 'text-red-400'}">R ${netProfit.toLocaleString()}</p></div>
-            </div>
-            <div id="expenseList" class="space-y-2 mb-4">`;
-            if (financials.expenses.length > 0) {
-                financialsHTML += financials.expenses.map(ex => `
-                    <div class="p-2 rounded-lg bg-dark flex justify-between items-center">
-                        <div>
-                            <p>${ex.description} <span class="text-xs ${ex.type === 'Ongoing' ? 'text-yellow-400' : 'text-blue-400'}">(${ex.type})</span></p>
-                            <p class="text-sm text-slate-400">R ${ex.amount.toLocaleString()}</p>
-                        </div>
-                        <button data-delete-expense-id="${ex.id}" class="text-red-500 text-lg">×</button>
-                    </div>
-                `).join('');
-            } else {
-                financialsHTML += `<p class="text-slate-500 text-sm">No expenses logged.</p>`;
-            }
-            financialsHTML += `</div><form id="newExpenseForm" class="space-y-2"><input type="text" id="newExpenseDescription" placeholder="Expense Description" class="p-2 rounded-lg w-full"><div class="grid grid-cols-2 gap-2"><input type="number" id="newExpenseAmount" placeholder="Amount (ZAR)" class="p-2 rounded-lg"><select id="newExpenseType" class="p-2 rounded-lg"><option>Once-off</option><option>Ongoing</option></select></div><button type="submit" class="w-full accent-gradient-bg text-black font-bold p-2 rounded-lg mt-2">Add Expense</button></form>`;
-            return financialsHTML;
-        };
+        const renderTimeTracker = (client) => { const totalHours = (client.timeLogs || []).reduce((acc, log) => acc + log.hours, 0); return ` <h3 class="text-xl font-semibold mb-4 text-white">Time Tracker</h3> <div class="text-center mb-4"> <div id="timerDisplay" class="text-5xl font-bold tracking-widest">${formatTime(timerState.elapsedTime)}</div> <div class="text-slate-400">Total Logged: ${totalHours.toFixed(2)} hours</div> </div> <div class="flex justify-center gap-4 mb-4"> <button id="startTimerBtn" class="bg-green-500/80 hover:bg-green-400/80 p-3 rounded-full w-12 h-12"><i class="fa-solid fa-play"></i></button> <button id="pauseTimerBtn" class="bg-yellow-500/80 hover:bg-yellow-400/80 p-3 rounded-full w-12 h-12"><i class="fa-solid fa-pause"></i></button> <button id="resetTimerBtn" class="bg-red-500/80 hover:bg-red-400/80 p-3 rounded-full w-12 h-12"><i class="fa-solid fa-stop"></i></button> </div> <button id="logTimeBtn" class="w-full accent-gradient-bg text-black font-bold p-2 rounded-lg">Log Time</button>`; };
+        const renderFinancialsHub = (client) => { const financials = client.financials || { expenses: [] }; const totalExpenses = financials.expenses.reduce((acc, ex) => acc + ex.amount, 0); const income = parseFloat(String(client.compensation).replace(/[^0-9.-]+/g,"")) || 0; const netProfit = income - totalExpenses; let financialsHTML = `<h3 class="text-xl font-semibold mb-4 text-white">Project Financials</h3> <div class="grid grid-cols-2 gap-4 mb-4 text-center"> <div><p class="text-slate-400 text-sm">Total Expenses</p><p class="text-2xl font-bold text-red-400">R ${totalExpenses.toLocaleString()}</p></div> <div><p class="text-slate-400 text-sm">Net Profit</p><p class="text-2xl font-bold ${netProfit >= 0 ? 'text-green-400' : 'text-red-400'}">R ${netProfit.toLocaleString()}</p></div> </div> <div id="expenseList" class="space-y-2 mb-4">`; if (financials.expenses.length > 0) { financialsHTML += financials.expenses.map(ex => ` <div class="p-2 rounded-lg bg-dark flex justify-between items-center"> <div> <p>${ex.description} <span class="text-xs ${ex.type === 'Ongoing' ? 'text-yellow-400' : 'text-blue-400'}">(${ex.type})</span></p> <p class="text-sm text-slate-400">R ${ex.amount.toLocaleString()}</p> </div> <button data-delete-expense-id="${ex.id}" class="text-red-500 text-lg">×</button> </div> `).join(''); } else { financialsHTML += `<p class="text-slate-500 text-sm">No expenses logged.</p>`; } financialsHTML += `</div><form id="newExpenseForm" class="space-y-2"><input type="text" id="newExpenseDescription" placeholder="Expense Description" class="p-2 rounded-lg w-full"><div class="grid grid-cols-2 gap-2"><input type="number" id="newExpenseAmount" placeholder="Amount (ZAR)" class="p-2 rounded-lg"><select id="newExpenseType" class="p-2 rounded-lg"><option>Once-off</option><option>Ongoing</option></select></div><button type="submit" class="w-full accent-gradient-bg text-black font-bold p-2 rounded-lg mt-2">Add Expense</button></form>`; return financialsHTML; };
+        
+        // --- NOTES VIEW REVAMP ---
         const renderNotesView = () => {
-            let notesHTML = `<div class="flex justify-between items-center mb-6"><h2 class="text-4xl font-bold text-white">Notes</h2><button id="newNoteBtn" class="accent-gradient-bg hover:opacity-90 text-black font-bold py-2 px-4 rounded-lg">New Note</button></div><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">`;
-            notes.forEach(note => {
-                const linkedClients = clients.filter(c => note.linkedClientIds.includes(c.id));
-                notesHTML += `<div class="glass-pane p-6 rounded-lg shadow-lg cursor-pointer" data-note-id="${note.id}">
-                    <h3 class="font-bold text-xl mb-2">${note.title}</h3>
-                    <p class="text-slate-400 text-sm mb-4 truncate">${note.content || 'No content'}</p>
-                    <div class="flex flex-wrap gap-2">${linkedClients.map(c => `<span class="text-xs px-2 py-1 rounded-full" style="background-color:${c.color}; color: #000;">${c.name}</span>`).join('')}</div>
-                </div>`;
+            let filteredNotes = [...notes];
+            // Filter by folder
+            if (notesState.activeFolderId && notesState.activeFolderId !== 'all') {
+                filteredNotes = filteredNotes.filter(n => n.folderId === notesState.activeFolderId);
+            }
+            // Filter by tag
+            if (notesState.activeTag) {
+                filteredNotes = filteredNotes.filter(n => n.tags && n.tags.includes(notesState.activeTag));
+            }
+            // Filter by search term
+            if (notesState.searchTerm) {
+                const term = notesState.searchTerm.toLowerCase();
+                filteredNotes = filteredNotes.filter(n => 
+                    n.title.toLowerCase().includes(term) || 
+                    n.content.toLowerCase().includes(term)
+                );
+            }
+            // Sort
+            const [sortKey, sortDir] = notesState.sortBy.split('-');
+            filteredNotes.sort((a, b) => {
+                let valA, valB;
+                if (sortKey === 'title') {
+                    valA = a.title.toLowerCase();
+                    valB = b.title.toLowerCase();
+                } else { // createdAt or updatedAt
+                    valA = new Date(a[sortKey]);
+                    valB = new Date(b[sortKey]);
+                }
+                if (valA < valB) return sortDir === 'asc' ? -1 : 1;
+                if (valA > valB) return sortDir === 'asc' ? 1 : -1;
+                return 0;
             });
-            notesHTML += `</div>`;
+
+            // Pinned notes first
+            const pinnedNotes = filteredNotes.filter(n => n.isPinned);
+            const unpinnedNotes = filteredNotes.filter(n => !n.isPinned);
+            
+            const allTags = [...new Set(notes.flatMap(n => n.tags || []))];
+
+            const notesHTML = `
+                <div class="flex flex-col md:flex-row gap-8 h-full">
+                    <!-- Notes Sidebar -->
+                    <div class="w-full md:w-1/4 lg:w-1/5 flex-shrink-0">
+                        <div class="glass-pane p-4 rounded-lg h-full">
+                            <button id="newNoteBtn" class="w-full accent-gradient-bg hover:opacity-90 text-black font-bold py-3 px-4 rounded-lg mb-6">New Note</button>
+                            
+                            <h3 class="font-semibold text-slate-300 mb-2">Folders</h3>
+                            <ul id="notesFolderList" class="space-y-1 mb-6">
+                                <li class="p-2 rounded-lg cursor-pointer ${notesState.activeFolderId === 'all' ? 'bg-accent-dark/30' : ''}" data-folder-id="all">All Notes</li>
+                                ${folders.map(f => `<li class="p-2 rounded-lg cursor-pointer ${notesState.activeFolderId === f.id ? 'bg-accent-dark/30' : ''}" data-folder-id="${f.id}">${f.name}</li>`).join('')}
+                            </ul>
+                            <form id="newFolderForm" class="flex gap-2 mb-6">
+                                <input type="text" id="newFolderName" placeholder="New Folder" class="p-2 rounded-lg flex-1 text-sm">
+                                <button type="submit" class="accent-gradient-bg text-black font-bold p-2 rounded-lg text-sm">+</button>
+                            </form>
+
+                            <h3 class="font-semibold text-slate-300 mb-2">Tags</h3>
+                            <div id="notesTagList" class="flex flex-wrap gap-2">
+                                ${allTags.map(tag => `<span class="px-3 py-1 rounded-full text-xs cursor-pointer ${notesState.activeTag === tag ? 'accent-gradient-bg text-black font-bold' : 'bg-dark'}" data-tag="${tag}">${tag}</span>`).join('')}
+                                ${notesState.activeTag ? `<span class="px-3 py-1 rounded-full text-xs cursor-pointer bg-red-800/80" id="clearTagFilter">Clear</span>` : ''}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Notes Grid -->
+                    <div class="flex-1 overflow-y-auto">
+                        <div class="flex items-center justify-between mb-6">
+                            <input type="search" id="noteSearch" placeholder=" Search notes..." class="w-full max-w-sm p-2 rounded-lg text-sm glass-pane" value="${notesState.searchTerm}">
+                            <select id="noteSort" class="p-2 rounded-lg text-sm glass-pane">
+                                <option value="createdAt-desc" ${notesState.sortBy === 'createdAt-desc' ? 'selected' : ''}>Created: Newest</option>
+                                <option value="createdAt-asc" ${notesState.sortBy === 'createdAt-asc' ? 'selected' : ''}>Created: Oldest</option>
+                                <option value="updatedAt-desc" ${notesState.sortBy === 'updatedAt-desc' ? 'selected' : ''}>Updated: Newest</option>
+                                <option value="updatedAt-asc" ${notesState.sortBy === 'updatedAt-asc' ? 'selected' : ''}>Updated: Oldest</option>
+                                <option value="title-asc" ${notesState.sortBy === 'title-asc' ? 'selected' : ''}>Title: A-Z</option>
+                                <option value="title-desc" ${notesState.sortBy === 'title-desc' ? 'selected' : ''}>Title: Z-A</option>
+                            </select>
+                        </div>
+                        <div id="notesGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                           ${renderNoteCards(pinnedNotes)}
+                           ${pinnedNotes.length > 0 ? `<hr class="col-span-full border-border-color my-4">` : ''}
+                           ${renderNoteCards(unpinnedNotes)}
+                        </div>
+                    </div>
+                </div>
+            `;
             notesViewEl.innerHTML = notesHTML;
-            document.getElementById('newNoteBtn').addEventListener('click', () => openNoteEditor());
-            notesViewEl.querySelectorAll('[data-note-id]').forEach(el => el.addEventListener('click', (e) => openNoteEditor(e.currentTarget.dataset.noteId)));
+            addNotesViewEventListeners();
+        };
+
+        const renderNoteCards = (notesToRender) => {
+            if (notesToRender.length === 0) return '<p class="text-slate-500 col-span-full text-center">No notes found.</p>';
+            return notesToRender.map(note => {
+                const linkedClients = clients.filter(c => note.linkedClientIds.includes(c.id));
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = note.content || '';
+                const plainTextContent = tempDiv.textContent || tempDiv.innerText || '';
+
+                return `<div class="glass-pane p-6 rounded-lg shadow-lg flex flex-col justify-between relative">
+                    <button class="absolute top-2 right-2 text-xl hover:text-accent-light pin-note-btn" data-note-id="${note.id}">
+                        <i class="${note.isPinned ? 'fa-solid text-accent-light' : 'fa-regular'} fa-thumbtack"></i>
+                    </button>
+                    <div class="cursor-pointer flex-grow edit-note-btn" data-note-id="${note.id}">
+                        <h3 class="font-bold text-xl mb-2 pr-6">${note.title}</h3>
+                        <p class="text-slate-400 text-sm mb-4 h-20 overflow-hidden text-ellipsis">${plainTextContent}</p>
+                    </div>
+                    <div>
+                        <div class="flex flex-wrap gap-2 mb-2">
+                           ${(note.tags || []).map(t => `<span class="text-xs px-2 py-1 rounded-full bg-dark">${t}</span>`).join('')}
+                        </div>
+                        <div class="flex flex-wrap gap-2">
+                           ${linkedClients.map(c => `<span class="text-xs px-2 py-1 rounded-full" style="background-color:${c.color}; color: #000;">${c.name}</span>`).join('')}
+                        </div>
+                    </div>
+                </div>`;
+            }).join('');
         };
 
         const openNoteEditor = (noteId = null) => {
@@ -524,7 +481,14 @@
             const note = noteId ? notes.find(n => n.id === noteId) : null;
             document.getElementById('noteId').value = note?.id || '';
             document.getElementById('noteTitle').value = note?.title || '';
-            document.getElementById('noteContent').value = note?.content || '';
+            
+            if (!noteQuillEditor) {
+                noteQuillEditor = new Quill('#noteContentEditor', { theme: 'snow', modules: { toolbar: [ ['bold', 'italic', 'underline'], ['link'], [{ 'header': 1 }, { 'header': 2 }], [{ 'list': 'ordered'}, { 'list': 'bullet' }] ] } });
+            }
+            noteQuillEditor.root.innerHTML = note?.content || '';
+
+            document.getElementById('noteTags').value = note?.tags?.join(', ') || '';
+            
             titleEl.textContent = note ? 'Edit Note' : 'Create New Note';
             deleteBtn.style.display = note ? 'block' : 'none';
 
@@ -542,17 +506,23 @@
         const handleNoteFormSubmit = (e) => {
             e.preventDefault();
             const id = document.getElementById('noteId').value;
+            const now = new Date().toISOString();
+            const tags = document.getElementById('noteTags').value.split(',').map(t => t.trim().startsWith('#') ? t.trim() : `#${t.trim()}`).filter(t => t.length > 1);
+
             const noteData = {
                 title: document.getElementById('noteTitle').value,
-                content: document.getElementById('noteContent').value,
+                content: noteQuillEditor.root.innerHTML,
                 linkedClientIds: Array.from(document.querySelectorAll('#noteClientLinks input:checked')).map(el => el.value),
-                folderId: document.getElementById('noteFolder').value
+                folderId: document.getElementById('noteFolder').value,
+                tags: [...new Set(tags)], // Remove duplicates
+                updatedAt: now,
             };
+
             if (id) {
                 const noteIndex = notes.findIndex(n => n.id === id);
                 notes[noteIndex] = { ...notes[noteIndex], ...noteData };
             } else {
-                notes.push({ id: `note_${Date.now()}`, ...noteData });
+                notes.push({ id: `note_${Date.now()}`, ...noteData, isPinned: false, createdAt: now });
             }
             saveNotes();
             closeModal(document.getElementById('noteEditorModal'));
@@ -574,7 +544,7 @@
             if (e.target.matches('button[data-delete-team-id]')) { client.team = client.team.filter(t => t.id !== e.target.dataset.deleteTeamId); needsRender = true; } 
             if (e.target.matches('button[data-delete-expense-id]')) { client.financials.expenses = client.financials.expenses.filter(ex => ex.id !== e.target.dataset.deleteExpenseId); needsRender = true; }
             if (e.target.matches('input[data-milestone-id]')) { const milestone = client.milestones.find(m=>m.id===e.target.dataset.milestoneId); if(milestone) milestone.completed = e.target.checked; needsRender = true; } 
-            if (e.target.matches('[data-note-id]')) { openNoteEditor(e.target.dataset.noteId); } 
+            if (e.target.matches('.note-link')) { currentView = 'notes'; renderApp(); openNoteEditor(e.target.dataset.noteId); } 
             updateClient(clientId, client); 
             if(needsRender || e.type === 'submit' || e.target.type === 'checkbox' || e.target.tagName === 'BUTTON') {
                 if (currentView === 'clients') renderClientDashboard();
@@ -582,70 +552,99 @@
             }
         };
         const handleNewFormSubmits = (e) => { e.preventDefault(); const clientId = e.target.dataset.clientId || activeClientId; const client = clients.find(c => c.id === clientId); if (!client) return; if (e.target.id === 'newActionForm') { const text = document.getElementById('newActionInput').value.trim(); if (text) client.actions.push({ id: `act_${Date.now()}`, text, completed: false, dueDate: document.getElementById('newActionDueDate').value, priority: document.getElementById('newActionPriority').value, subtasks: [] }); e.target.reset(); } if (e.target.id === 'newLinkForm') { const label = document.getElementById('newLinkLabel').value.trim(); const url = document.getElementById('newLinkUrl').value.trim(); if (label && url) client.links.push({ label, url }); e.target.reset(); } if (e.target.id === 'newCompetitorForm') { const name = document.getElementById('newCompetitorName').value.trim(); const followers = parseInt(document.getElementById('newCompetitorFollowers').value) || 0; const traffic = parseInt(document.getElementById('newCompetitorTraffic').value) || 0; if (name) client.competitors.push({ name, followers, traffic }); e.target.reset(); } if (e.target.id === 'newMilestoneForm') { const text = document.getElementById('newMilestoneText').value.trim(); const date = document.getElementById('newMilestoneDate').value; if (text && date) client.milestones.push({id: `ms_${Date.now()}`, text, date, completed: false}); e.target.reset(); } if (e.target.id === 'newTeamMemberForm') { const name = document.getElementById('newTeamMemberName').value.trim(); if (name) { if(!client.team) client.team = []; client.team.push({ id: `tm_${Date.now()}`, name, role: document.getElementById('newTeamMemberRole').value, duration: document.getElementById('newTeamMemberDuration').value, compensation: document.getElementById('newTeamMemberCompensation').value, type: document.getElementById('newTeamMemberType').value }); e.target.reset(); } } 
-            if (e.target.id === 'newExpenseForm') {
-                const description = document.getElementById('newExpenseDescription').value.trim();
-                const amount = parseFloat(document.getElementById('newExpenseAmount').value);
-                if (description && amount > 0) {
-                    if (!client.financials) client.financials = { expenses: [] };
-                    client.financials.expenses.push({ id: `exp_${Date.now()}`, description, amount, type: document.getElementById('newExpenseType').value });
-                    e.target.reset();
-                }
-            }
-            if (e.target.classList.contains('new-subtask-form')) {
-                const actionId = e.target.dataset.actionId;
-                const action = client.actions.find(a => a.id === actionId);
-                const input = e.target.querySelector('.new-subtask-input');
-                const text = input.value.trim();
-                if (text && action) {
-                    if (!action.subtasks) action.subtasks = [];
-                    action.subtasks.push({ id: `sub_${Date.now()}`, text, completed: false });
-                    input.value = '';
-                }
-            }
+            if (e.target.id === 'newExpenseForm') { const description = document.getElementById('newExpenseDescription').value.trim(); const amount = parseFloat(document.getElementById('newExpenseAmount').value); if (description && amount > 0) { if (!client.financials) client.financials = { expenses: [] }; client.financials.expenses.push({ id: `exp_${Date.now()}`, description, amount, type: document.getElementById('newExpenseType').value }); e.target.reset(); } }
+            if (e.target.classList.contains('new-subtask-form')) { const actionId = e.target.dataset.actionId; const action = client.actions.find(a => a.id === actionId); const input = e.target.querySelector('.new-subtask-input'); const text = input.value.trim(); if (text && action) { if (!action.subtasks) action.subtasks = []; action.subtasks.push({ id: `sub_${Date.now()}`, text, completed: false }); input.value = ''; } }
             updateClient(clientId, client); 
             if (currentView === 'clients') renderClientDashboard();
             if (currentView === 'global') renderGlobalDashboard();
         };
+        const addNotesViewEventListeners = () => {
+            document.getElementById('newNoteBtn').addEventListener('click', () => openNoteEditor());
+            notesViewEl.addEventListener('click', e => {
+                const editBtn = e.target.closest('.edit-note-btn');
+                const pinBtn = e.target.closest('.pin-note-btn');
+                const folderItem = e.target.closest('#notesFolderList li');
+                const tagItem = e.target.closest('#notesTagList span');
+
+                if (editBtn) openNoteEditor(editBtn.dataset.noteId);
+                if (pinBtn) {
+                    const noteId = pinBtn.dataset.noteId;
+                    const note = notes.find(n => n.id === noteId);
+                    if (note) {
+                        note.isPinned = !note.isPinned;
+                        saveNotes();
+                        renderNotesView();
+                    }
+                }
+                if (folderItem) {
+                    notesState.activeFolderId = folderItem.dataset.folderId;
+                    renderNotesView();
+                }
+                if (tagItem) {
+                    if (tagItem.id === 'clearTagFilter') {
+                        notesState.activeTag = null;
+                    } else {
+                        notesState.activeTag = tagItem.dataset.tag;
+                    }
+                    renderNotesView();
+                }
+            });
+            document.getElementById('newFolderForm').addEventListener('submit', e => {
+                e.preventDefault();
+                const input = document.getElementById('newFolderName');
+                const name = input.value.trim();
+                if (name) {
+                    folders.push({ id: `folder_${Date.now()}`, name });
+                    saveFolders();
+                    input.value = '';
+                    renderNotesView();
+                }
+            });
+            document.getElementById('noteSearch').addEventListener('input', e => {
+                notesState.searchTerm = e.target.value;
+                renderNotesView();
+            });
+            document.getElementById('noteSort').addEventListener('change', e => {
+                notesState.sortBy = e.target.value;
+                renderNotesView();
+            });
+        };
 
         // --- Init & Helpers ---
-        const formatTime = (ms) => {
-            const totalSeconds = Math.floor(ms / 1000);
-            const hours = Math.floor(totalSeconds / 3600);
-            const minutes = Math.floor((totalSeconds % 3600) / 60);
-            const seconds = totalSeconds % 60;
-            return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-        };
+        const formatTime = (ms) => { const totalSeconds = Math.floor(ms / 1000); const hours = Math.floor(totalSeconds / 3600); const minutes = Math.floor((totalSeconds % 3600) / 60); const seconds = totalSeconds % 60; return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`; };
         const openModal = (modal) => { modal.style.display = 'block'; };
         const closeModal = (modal) => { modal.style.display = 'none'; };
         const colorToRgba = (color, alpha) => { const r = parseInt(color.slice(1, 3), 16), g = parseInt(color.slice(3, 5), 16), b = parseInt(color.slice(5, 7), 16); return `rgba(${r}, ${g}, ${b}, ${alpha})`; };
         const addDashboardEventListeners = () => { document.getElementById('archiveClientBtn').addEventListener('click', () => { const c = clients.find(c=>c.id===activeClientId); c.status = c.status==='active'?'archived':'active'; updateClient(activeClientId, c); renderApp(); }); document.getElementById('generateReportBtn').addEventListener('click', () => { const reportEl = document.getElementById('clientDashboard'); html2canvas(reportEl, { backgroundColor: '#000000' }).then(canvas => { const imgData = canvas.toDataURL('image/png'); const { jsPDF } = window.jspdf; const pdf = new jsPDF('p', 'mm', 'a4'); const pdfWidth = pdf.internal.pageSize.getWidth(); const pdfHeight = (canvas.height * pdfWidth) / canvas.width; pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight); pdf.save(`${clients.find(c=>c.id===activeClientId).name}-report.pdf`); }); }); document.getElementById('addCustomMetricBtn').addEventListener('click', () => openModal(document.getElementById('customMetricModal'))); document.getElementById('noteTemplateSelector').addEventListener('change', (e) => { const template = NOTE_TEMPLATES[e.target.value]; if(template) document.getElementById('newActionInput').value = template; }); clientDashboardEl.addEventListener('change', handleDashboardInteraction); clientDashboardEl.addEventListener('blur', handleDashboardInteraction, true); clientDashboardEl.addEventListener('click', handleDashboardInteraction); clientDashboardEl.addEventListener('submit', handleNewFormSubmits); const container = document.getElementById('metricsContainer'); let draggedItem = null; container.addEventListener('dragstart', e => { if(e.target.classList.contains('draggable')) { draggedItem = e.target; setTimeout(() => e.target.classList.add('dragging'), 0); } }); container.addEventListener('dragend', e => { if(draggedItem) { draggedItem.classList.remove('dragging'); draggedItem = null; } }); container.addEventListener('dragover', e => { e.preventDefault(); const afterElement = getDragAfterElement(container, e.clientY); const draggable = document.querySelector('.dragging'); if (afterElement == null) { container.appendChild(draggable); } else { container.insertBefore(draggable, afterElement); } }); 
-            document.getElementById('editProfileBtn').addEventListener('click', (e) => {
-                const card = document.getElementById('clientProfileCard');
-                const isEditing = card.classList.contains('profile-edit');
-                if (isEditing) {
-                    const client = clients.find(c => c.id === activeClientId);
-                    client.contact.name = document.getElementById('editContactName').value;
-                    client.contact.email = document.getElementById('editContactEmail').value;
-                    client.serviceType = document.getElementById('editServiceType').value;
-                    client.compensation = document.getElementById('editCompensation').value;
-                    client.platforms = Array.from(document.querySelectorAll('#editPlatforms input:checked')).map(el => el.value);
-                    updateClient(activeClientId, client);
-                    renderClientDashboard();
-                } else {
-                    card.classList.remove('profile-view');
-                    card.classList.add('profile-edit');
-                    e.target.textContent = 'Save Profile';
-                }
+            document.getElementById('editProfileBtn').addEventListener('click', (e) => { 
+                e.stopPropagation();
+                const card = document.getElementById('clientProfileCard'); 
+                const isEditing = card.classList.contains('profile-edit'); 
+                if (isEditing) { 
+                    const client = clients.find(c => c.id === activeClientId); 
+                    client.contact.name = document.getElementById('editContactName').value; 
+                    client.contact.email = document.getElementById('editContactEmail').value; 
+                    client.serviceType = document.getElementById('editServiceType').value; 
+                    client.compensation = document.getElementById('editCompensation').value; 
+                    client.platforms = Array.from(document.querySelectorAll('#editPlatforms input:checked')).map(el => el.value); 
+                    updateClient(activeClientId, client); 
+                    renderClientDashboard(); 
+                } else { 
+                    card.classList.remove('profile-view'); 
+                    card.classList.add('profile-edit'); 
+                    e.target.textContent = 'Save Profile'; 
+                } 
             });
             renderAnalyticsChart(clients.find(c => c.id === activeClientId)); renderActionPriorityChart(clients.find(c => c.id === activeClientId)); 
         };
         function getDragAfterElement(container, y) { const draggableElements = [...container.querySelectorAll('.draggable:not(.dragging)')]; return draggableElements.reduce((closest, child) => { const box = child.getBoundingClientRect(); const offset = y - box.top - box.height / 2; if (offset < 0 && offset > closest.offset) { return { offset: offset, element: child }; } else { return closest; } }, { offset: Number.NEGATIVE_INFINITY }).element; }
 
         const init = () => {
-            seedInitialData();
-            getClients(); 
-            getNotes();
-            getFolders();
+            getClients(); getNotes(); getFolders();
+            if (clients.length === 0) {
+                seedInitialData();
+                getClients(); getNotes(); getFolders();
+            }
             
             newClientBtn.addEventListener('click', () => openModal(document.getElementById('newClientModal')));
             cancelNewClientBtn.addEventListener('click', () => closeModal(document.getElementById('newClientModal')));
@@ -656,11 +655,13 @@
             document.getElementById('cancelNote').addEventListener('click', () => closeModal(noteEditorModal));
             document.getElementById('deleteNoteBtn').addEventListener('click', () => {
                 const noteId = document.getElementById('noteId').value;
-                if (noteId && confirm('Are you sure you want to delete this note?')) {
-                    notes = notes.filter(n => n.id !== noteId);
-                    saveNotes();
-                    closeModal(noteEditorModal);
-                    renderNotesView();
+                if (noteId) {
+                    if (confirm('Are you sure you want to delete this note?')) {
+                        notes = notes.filter(n => n.id !== noteId);
+                        saveNotes();
+                        closeModal(noteEditorModal);
+                        renderNotesView();
+                    }
                 }
             });
 
@@ -668,33 +669,19 @@
             document.getElementById('cancelCustomMetric').addEventListener('click', () => closeModal(document.getElementById('customMetricModal')));
             
             const timeLogModal = document.getElementById('timeLogModal');
-            document.getElementById('timeLogForm').addEventListener('submit', (e) => {
-                 e.preventDefault();
-                const client = clients.find(c => c.id === activeClientId);
-                if (!client) return;
-                const hours = parseFloat(document.getElementById('timeLogHours').value);
-                const description = document.getElementById('timeLogDescription').value.trim();
-                if (hours > 0) {
-                    if (!client.timeLogs) client.timeLogs = [];
-                    client.timeLogs.push({ date: new Date().toISOString(), hours, description });
-                    updateClient(activeClientId, client);
-                    closeModal(timeLogModal);
-                    renderClientDashboard();
-                }
-            });
-            document.getElementById('cancelTimeLog').addEventListener('click', () => closeModal(timeLogModal));
+            document.getElementById('timeLogForm').addEventListener('submit', (e) => { e.preventDefault(); const client = clients.find(c => c.id === activeClientId); if (!client) return; const hours = parseFloat(document.getElementById('timeLogHours').value); const description = document.getElementById('timeLogDescription').value.trim(); if (hours > 0) { if (!client.timeLogs) client.timeLogs = []; client.timeLogs.push({ date: new Date().toISOString(), hours, description }); updateClient(activeClientId, client); closeModal(timeLogModal); renderClientDashboard(); } });
+            document.getElementById('cancelTimeLog').addEventListener('click', () => closeModal(document.getElementById('timeLogModal')));
 
 
             clientListEl.addEventListener('click', (e) => { const target = e.target.closest('[data-client-id]'); if (target) { activeClientId = target.dataset.clientId; currentView = 'clients'; renderApp(); } });
             clientSearchEl.addEventListener('input', renderClientList);
             showArchivedEl.addEventListener('change', renderClientList);
-            showGlobalDashboardBtn.addEventListener('click', () => { currentView = 'global'; renderApp(); });
+            showGlobalDashboardBtn.addEventListener('click', () => { currentView = 'global'; activeClientId = null; renderApp(); });
             showClientsBtn.addEventListener('click', () => { currentView = 'clients'; renderApp(); });
-            showCalendarBtn.addEventListener('click', () => { currentView = 'calendar'; renderApp(); });
-            showNotesBtn.addEventListener('click', () => { currentView = 'notes'; renderApp(); });
+            showCalendarBtn.addEventListener('click', () => { currentView = 'calendar'; activeClientId = null; renderApp(); });
+            showNotesBtn.addEventListener('click', () => { currentView = 'notes'; activeClientId = null; renderApp(); });
             document.querySelectorAll('.theme-btn').forEach(btn => btn.addEventListener('click', (e) => { localStorage.setItem('theme', e.target.dataset.theme); renderApp(); if(activeClientId) renderClientDashboard(); }));
             
-            // Add event listeners for the global dashboard
             globalDashboardEl.addEventListener('click', handleDashboardInteraction);
             globalDashboardEl.addEventListener('submit', handleNewFormSubmits);
 
