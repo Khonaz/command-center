@@ -424,6 +424,17 @@
             document.getElementById('archiveToggle').style.display = isClientView ? 'flex' : 'none';
             clientSearchEl.style.display = isClientView ? 'block' : 'none';
 
+            // Toggle main sidebar and padding for a more immersive mind map experience
+            const sidebar = document.getElementById('sidebar');
+            const mainContent = document.getElementById('mainContent');
+            if (currentView === 'mindMaps') {
+                sidebar.style.display = 'none';
+                mainContent.classList.remove('p-4', 'sm:p-6', 'lg:p-8');
+            } else {
+                sidebar.style.display = 'block';
+                mainContent.classList.add('p-4', 'sm:p-6', 'lg:p-8');
+            }
+
             if (currentView === 'clients') {
                 if (activeClientId) {
                     views.clients.style.display = 'block';
@@ -442,7 +453,7 @@
                 views.notes.style.display = 'block';
                 renderNotesView();
             } else if (currentView === 'mindMaps') {
-                views.mindMaps.style.display = 'flex';
+                views.mindMaps.style.display = 'block'; // Use block instead of flex
                 renderMindMapsView();
             }
         };
@@ -615,12 +626,21 @@
         // --- MIND MAPS VIEW ---
         const renderMindMapsView = () => {
             mindMapsViewEl.innerHTML = `
-                <div class="flex flex-col md:flex-row gap-8 h-full">
-                    <!-- Mind Maps Sidebar -->
-                    <div class="w-full md:w-1/4 lg:w-1/5 flex-shrink-0">
-                        <div class="glass-pane p-4 rounded-lg h-full flex flex-col">
+                <div class="relative h-full w-full">
+                    <!-- Mind Map Canvas -->
+                    <div id="mindMapCanvasContainer" class="glass-pane rounded-lg w-full h-full">
+                        ${!activeMindMapId ? `<div class="flex items-center justify-center h-full text-slate-500">Select a mind map to view, or create a new one.</div>` : ''}
+                    </div>
+
+                    <!-- Toggle Sidebar Button -->
+                    <button id="mindMapSidebarToggle" class="absolute top-4 left-4 z-30 accent-gradient-bg text-black p-2 rounded-lg btn-primary h-10 w-10 flex items-center justify-center">
+                        <i class="fa-solid fa-bars"></i>
+                    </button>
+
+                    <!-- Mind Maps Sidebar (Overlay) -->
+                    <div id="mindMapListSidebar" class="absolute top-0 left-0 h-full w-72 z-20 glass-pane p-4 transition-transform duration-300 ease-in-out -translate-x-full">
+                        <div class="flex flex-col h-full">
                             <button id="newMindMapBtn" class="w-full accent-gradient-bg hover:opacity-90 text-black font-bold py-3 px-4 rounded-lg mb-6 btn-primary">New Mind Map</button>
-                            
                             <h3 class="font-semibold text-slate-400 mb-2 uppercase text-xs tracking-wider">Mind Maps</h3>
                             <ul id="mindMapList" class="space-y-1 flex-1 overflow-y-auto">
                                 ${mindMaps.map(map => {
@@ -633,16 +653,11 @@
                             </ul>
                         </div>
                     </div>
-
-                    <!-- Mind Map Canvas -->
-                    <div id="mindMapCanvasContainer" class="glass-pane rounded-lg flex-1">
-                        ${!activeMindMapId ? `<div class="flex items-center justify-center h-full text-slate-500">Select a mind map to view, or create a new one.</div>` : ''}
-                    </div>
                 </div>
             `;
             addMindMapsViewEventListeners();
             if (activeMindMapId) {
-                initializeMindMap(activeMindMapId);
+                setTimeout(() => initializeMindMap(activeMindMapId), 50);
             }
         };
         
@@ -980,13 +995,35 @@
         };
         
         const addMindMapsViewEventListeners = () => {
-            document.getElementById('newMindMapBtn').addEventListener('click', () => {
-                const modal = document.getElementById('newMindMapModal');
-                const clientSelect = document.getElementById('newMindMapClientLink');
-                clientSelect.innerHTML = '<option value="">Link to a client (optional)</option>' + clients.filter(c => c.status === 'active').map(c => `<option value="${c.id}">${c.name}</option>`).join('');
-                openModal(modal);
-            });
-            
+            const sidebar = document.getElementById('mindMapListSidebar');
+            const toggleBtn = document.getElementById('mindMapSidebarToggle');
+
+            if (toggleBtn) {
+                toggleBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    sidebar.classList.toggle('-translate-x-full');
+                });
+            }
+
+            if (sidebar) {
+                sidebar.addEventListener('click', e => {
+                    const mapItem = e.target.closest('#mindMapList li');
+                    if (mapItem) {
+                        activeMindMapId = mapItem.dataset.mapId;
+                        sidebar.classList.add('-translate-x-full'); // Hide sidebar on selection
+                        renderMindMapsView(); 
+                    }
+
+                    const newMapBtn = e.target.closest('#newMindMapBtn');
+                    if (newMapBtn) {
+                        const modal = document.getElementById('newMindMapModal');
+                        const clientSelect = document.getElementById('newMindMapClientLink');
+                        clientSelect.innerHTML = '<option value="">Link to a client (optional)</option>' + clients.filter(c => c.status === 'active').map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+                        openModal(modal);
+                    }
+                });
+            }
+
             document.getElementById('newMindMapForm').addEventListener('submit', (e) => {
                 e.preventDefault();
                 const title = document.getElementById('newMindMapName').value.trim();
@@ -1003,19 +1040,11 @@
                 mindMaps.push(newMap);
                 saveMindMaps();
                 activeMindMapId = newMap.id;
-                renderMindMapsView();
                 closeModal(document.getElementById('newMindMapModal'));
+                renderMindMapsView();
             });
 
             document.getElementById('cancelNewMindMap').addEventListener('click', () => closeModal(document.getElementById('newMindMapModal')));
-
-            mindMapsViewEl.addEventListener('click', e => {
-                const mapItem = e.target.closest('#mindMapList li');
-                if (mapItem) {
-                    activeMindMapId = mapItem.dataset.mapId;
-                    renderMindMapsView();
-                }
-            });
         };
 
         // --- Init & Helpers ---
