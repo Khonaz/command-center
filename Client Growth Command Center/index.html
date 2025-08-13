@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Client Growth Command Center 8.0</title>
+    <title>Client Growth Command Center 9.0</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -16,73 +16,92 @@
 
     <style>
         :root {
-            --bg-dark: #000000;
-            --glass-bg: rgba(25, 31, 43, 0.6);
-            --border-color: rgba(255, 255, 255, 0.1);
-            --text-primary: #f9fafb;
-            --text-secondary: #9ca3af;
+            --bg-dark: #0a0a0a;
+            --glass-bg: rgba(15, 15, 15, 0.5);
+            --border-color: rgba(255, 255, 255, 0.08);
+            --text-primary: #f0f2f5;
+            --text-secondary: #a0a0a0;
             --accent-light: #fde047;
             --accent-dark: #f59e0b;
         }
         body.theme-cobalt {
-            --accent-light: #60a5fa;
-            --accent-dark: #2563eb;
+            --accent-light: #3b82f6;
+            --accent-dark: #1d4ed8;
+        }
+        @keyframes aurora {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
         }
         body { 
             font-family: 'Inter', sans-serif; 
             background-color: var(--bg-dark); 
             color: var(--text-primary);
-            background-image: radial-gradient(circle at top right, color-mix(in srgb, var(--accent-dark), transparent 80%), transparent 40%);
+            background: linear-gradient(-45deg, #000000, #111827, #000000, #1e293b);
+            background-size: 400% 400%;
+            animation: aurora 15s ease infinite;
             background-attachment: fixed;
         }
         .glass-pane {
             background-color: var(--glass-bg);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
             border: 1px solid var(--border-color);
+            transition: background-color 0.3s, border-color 0.3s;
         }
-        ::-webkit-scrollbar { width: 8px; }
+        .glass-pane:hover {
+            background-color: rgba(25, 25, 25, 0.6);
+        }
+        ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: #4b5563; }
         .accent-gradient-text { background: linear-gradient(to right, var(--accent-light), var(--accent-dark)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         .accent-gradient-bg { background: linear-gradient(to right, var(--accent-dark), var(--accent-light)); }
-        .sidebar-item { transition: all 0.2s ease-in-out; border-left: 4px solid transparent; }
-        .sidebar-item:hover { background-color: rgba(255,255,255,0.05); }
-        .sidebar-item.active { background-color: rgba(255,255,255,0.1); color: white; font-weight: 600; border-left-color: var(--accent-light) !important; }
-        .modal { display: none; position: fixed; z-index: 50; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.7); }
+        .sidebar-item { transition: all 0.2s ease-in-out; border-left: 3px solid transparent; padding-left: calc(1rem - 3px); }
+        .sidebar-item:hover { background-color: rgba(255,255,255,0.03); border-left-color: var(--accent-dark); }
+        .sidebar-item.active { background-color: rgba(255,255,255,0.07); color: white; font-weight: 600; border-left-color: var(--accent-light) !important; }
+        .modal { display: none; position: fixed; z-index: 50; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.8); backdrop-filter: blur(5px); }
         .modal-content { max-height: 90vh; overflow-y: auto; }
-        input, select, textarea { background-color: rgba(0,0,0,0.2); border: 1px solid var(--border-color); color: var(--text-primary); }
-        input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent-dark); box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent-dark), transparent 50%); }
+        input, select, textarea { background-color: rgba(0,0,0,0.3); border: 1px solid var(--border-color); color: var(--text-primary); transition: border-color 0.3s, box-shadow 0.3s; }
+        input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent-dark); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-dark), transparent 70%); }
         .progress-bar { background-color: var(--border-color); }
         .progress-bar-fill { background: linear-gradient(to right, var(--accent-dark), var(--accent-light)); transition: width 0.5s ease-in-out; }
         .draggable { cursor: grab; }
-        .dragging { opacity: 0.5; cursor: grabbing; }
+        .dragging { opacity: 0.5; cursor: grabbing; transform: scale(1.05); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); }
         
         .profile-view .profile-edit-field { display: none; }
         .profile-edit .profile-view-field { display: none; }
         .profile-edit .profile-edit-field { display: block; }
         
-        /* Quill Editor Styles */
         .ql-toolbar { border-radius: 8px 8px 0 0; border-color: var(--border-color) !important; }
         .ql-container { border-radius: 0 0 8px 8px; border-color: var(--border-color) !important; min-height: 300px; font-size: 16px; }
         .ql-editor { color: var(--text-primary); }
         .ql-snow .ql-stroke { stroke: var(--text-secondary); }
         .ql-snow .ql-picker-label { color: var(--text-secondary); }
+
+        .btn-primary {
+            transition: all 0.2s ease;
+            transform: translateY(0);
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px color-mix(in srgb, var(--accent-dark), transparent 70%), 0 4px 6px -2px color-mix(in srgb, var(--accent-dark), transparent 85%);
+        }
     </style>
 </head>
-<body class="text-slate-200">
+<body class="text-slate-300">
 
     <div id="app" class="flex flex-col h-screen">
         <!-- Top Navigation -->
-        <header class="glass-pane shadow-lg z-20 border-b">
+        <header class="glass-pane shadow-lg z-20 border-b border-border-color/50">
             <div class="container mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="flex items-center justify-between h-16">
-                    <h1 class="text-xl font-bold accent-gradient-text hidden md:block"><i class="fa-solid fa-rocket mr-2"></i>Command Center 8.0</h1>
+                    <h1 class="text-xl font-bold accent-gradient-text hidden md:block"><i class="fa-solid fa-rocket mr-2"></i>Command Center 9.0</h1>
                     <div class="flex-1 mx-4">
                         <input type="search" id="clientSearch" placeholder=" Search clients..." class="w-full max-w-xs p-2 rounded-lg text-sm glass-pane">
                     </div>
-                    <button id="newClientBtn" class="accent-gradient-bg hover:opacity-90 text-black font-bold py-2 px-4 rounded-lg shadow-md transition-opacity whitespace-nowrap flex items-center">
+                    <button id="newClientBtn" class="accent-gradient-bg hover:opacity-90 text-black font-bold py-2 px-4 rounded-lg shadow-md transition-all whitespace-nowrap flex items-center btn-primary">
                         <i class="fa-solid fa-plus mr-2"></i> New Client
                     </button>
                 </div>
@@ -91,7 +110,7 @@
 
         <div class="flex flex-1 overflow-hidden">
             <!-- Side Navigation -->
-            <aside id="sidebar" class="w-64 flex-shrink-0 glass-pane border-r">
+            <aside id="sidebar" class="w-64 flex-shrink-0 glass-pane border-r border-border-color/50">
                 <nav class="p-4 h-full flex flex-col">
                     <div id="mainNav" class="space-y-1">
                          <button id="showGlobalDashboardBtn" class="sidebar-item w-full text-left p-3 rounded-lg flex items-center"><i class="fa-solid fa-tasks w-6 mr-2"></i>Master To-Do</button>
@@ -99,7 +118,7 @@
                          <button id="showCalendarBtn" class="sidebar-item w-full text-left p-3 rounded-lg flex items-center"><i class="fa-solid fa-calendar-days w-6 mr-2"></i>Calendar</button>
                          <button id="showNotesBtn" class="sidebar-item w-full text-left p-3 rounded-lg flex items-center"><i class="fa-solid fa-note-sticky w-6 mr-2"></i>Notes</button>
                     </div>
-                    <h2 id="clientsHeader" class="text-lg font-semibold my-4 text-slate-400">CLIENTS</h2>
+                    <h2 id="clientsHeader" class="text-sm font-semibold my-4 text-slate-500 uppercase tracking-wider">Clients</h2>
                     <ul id="clientList" class="space-y-1 flex-1 overflow-y-auto"></ul>
                     <div class="mt-4 pt-4 border-t border-border-color space-y-4">
                         <label id="archiveToggle" class="flex items-center space-x-2 cursor-pointer">
@@ -119,9 +138,10 @@
 
             <!-- Main Content Area -->
             <main id="mainContent" class="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
-                <div id="welcomeMessage" class="text-center text-slate-400 h-full flex flex-col justify-center items-center">
-                    <h2 class="text-3xl font-bold accent-gradient-text">Welcome to Command Center 8.0</h2>
-                    <p class="mt-2 text-lg">Select a client to begin.</p>
+                <div id="welcomeMessage" class="text-center text-slate-500 h-full flex flex-col justify-center items-center">
+                    <i class="fa-solid fa-rocket text-6xl accent-gradient-text mb-4"></i>
+                    <h2 class="text-3xl font-bold text-white">Welcome to Command Center 9.0</h2>
+                    <p class="mt-2 text-lg">Select a client from the sidebar to get started.</p>
                 </div>
                 <div id="clientDashboard" class="hidden"></div>
                 <div id="globalDashboard" class="hidden"></div>
@@ -145,7 +165,7 @@
                 <h3 class="font-semibold mb-2 text-slate-300">Platforms</h3>
                 <div id="platforms" class="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-6"><label class="flex items-center space-x-2"><input type="checkbox" value="Instagram"><span>Instagram</span></label><label class="flex items-center space-x-2"><input type="checkbox" value="Facebook"><span>Facebook</span></label><label class="flex items-center space-x-2"><input type="checkbox" value="TikTok"><span>TikTok</span></label><label class="flex items-center space-x-2"><input type="checkbox" value="YouTube"><span>YouTube</span></label><label class="flex items-center space-x-2"><input type="checkbox" value="LinkedIn"><span>LinkedIn</span></label><label class="flex items-center space-x-2"><input type="checkbox" value="Website"><span>Website</span></label></div>
                 <div class="mb-6"><label class="flex items-center space-x-2"><input type="checkbox" id="applyOnboarding" class="form-checkbox h-5 w-5 text-accent-dark bg-dark border-border-color rounded"><span>Apply Standard Onboarding Checklist</span></label></div>
-                <div class="flex justify-end space-x-4"><button type="button" id="cancelNewClient" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-lg">Cancel</button><button type="submit" class="accent-gradient-bg hover:opacity-90 text-black font-bold py-2 px-4 rounded-lg">Save Client</button></div>
+                <div class="flex justify-end space-x-4"><button type="button" id="cancelNewClient" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg transition-colors">Cancel</button><button type="submit" class="accent-gradient-bg hover:opacity-90 text-black font-bold py-2 px-4 rounded-lg btn-primary">Save Client</button></div>
             </form>
         </div>
     </div>
@@ -174,11 +194,11 @@
                 </div>
                 <div class="flex justify-between items-center mt-8">
                     <div>
-                        <button type="button" id="deleteNoteBtn" class="bg-red-800/80 hover:bg-red-700/80 text-white font-bold py-2 px-4 rounded-lg hidden">Delete Note</button>
+                        <button type="button" id="deleteNoteBtn" class="bg-red-800/80 hover:bg-red-700/80 text-white font-bold py-2 px-4 rounded-lg hidden transition-colors">Delete Note</button>
                     </div>
                     <div class="flex space-x-4">
-                        <button type="button" id="cancelNote" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-lg">Cancel</button>
-                        <button type="submit" class="accent-gradient-bg hover:opacity-90 text-black font-bold py-2 px-4 rounded-lg">Save Note</button>
+                        <button type="button" id="cancelNote" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg transition-colors">Cancel</button>
+                        <button type="submit" class="accent-gradient-bg hover:opacity-90 text-black font-bold py-2 px-4 rounded-lg btn-primary">Save Note</button>
                     </div>
                 </div>
             </form>
@@ -193,7 +213,7 @@
                     <input type="number" id="customMetricValue" placeholder="Current Value" class="p-3 rounded-lg w-full" required>
                     <input type="number" id="customMetricGoal" placeholder="Goal Value (Optional)" class="p-3 rounded-lg w-full">
                 </div>
-                <div class="flex justify-end space-x-4 mt-6"><button type="button" id="cancelCustomMetric" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-lg">Cancel</button><button type="submit" class="accent-gradient-bg hover:opacity-90 text-black font-bold py-2 px-4 rounded-lg">Add Metric</button></div>
+                <div class="flex justify-end space-x-4 mt-6"><button type="button" id="cancelCustomMetric" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg transition-colors">Cancel</button><button type="submit" class="accent-gradient-bg hover:opacity-90 text-black font-bold py-2 px-4 rounded-lg btn-primary">Add Metric</button></div>
             </form>
         </div>
     </div>
@@ -206,8 +226,8 @@
                     <textarea id="timeLogDescription" placeholder="Description of work..." class="p-3 rounded-lg w-full h-24"></textarea>
                 </div>
                 <div class="flex justify-end space-x-4 mt-6">
-                    <button type="button" id="cancelTimeLog" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-lg">Cancel</button>
-                    <button type="submit" class="accent-gradient-bg hover:opacity-90 text-black font-bold py-2 px-4 rounded-lg">Log</button>
+                    <button type="button" id="cancelTimeLog" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg transition-colors">Cancel</button>
+                    <button type="submit" class="accent-gradient-bg hover:opacity-90 text-black font-bold py-2 px-4 rounded-lg btn-primary">Log</button>
                 </div>
             </form>
         </div>
@@ -251,25 +271,24 @@
             sortBy: 'createdAt-desc'
         };
         let timerInterval = null;
-        let timerState = { running: false, startTime: 0, elapsedTime: 0 };
-        let isProfileEditing = false;
+        let timerState = { running: false, startTime: 0, elapsedTime: 0, activeClientId: null };
 
         const ONBOARDING_CHECKLIST = [ { text: 'Kick-off call with client', completed: false, priority: 'High', dueDate: '' }, { text: 'Gain access to all required platforms', completed: false, priority: 'High', dueDate: '' }, { text: 'Define initial 30-day goals & KPIs', completed: false, priority: 'Medium', dueDate: '' }, ];
         const NOTE_TEMPLATES = { 'Monthly Report Prep': '<h3>Monthly Report Preparation</h3><ol><li>Compile all key metrics.</li><li>Analyze trends and identify key takeaways.</li><li>Prepare presentation slides.</li><li>Schedule review meeting with client.</li></ol>', 'Content Brainstorm': '<h3>Content Brainstorming</h3><ul><li>Review top-performing content.</li><li>Analyze competitor content strategies.</li><li>Brainstorm 10 new content ideas.</li><li>Map ideas to content calendar.</li></ul>', };
 
         // --- Data Layer ---
-        const getClients = () => { clients = JSON.parse(localStorage.getItem('clients_v2')) || []; };
-        const saveClients = () => { localStorage.setItem('clients_v2', JSON.stringify(clients)); };
-        const getNotes = () => { notes = JSON.parse(localStorage.getItem('notes_v2')) || []; };
-        const saveNotes = () => { localStorage.setItem('notes_v2', JSON.stringify(notes)); };
-        const getFolders = () => { folders = JSON.parse(localStorage.getItem('folders_v2')) || []; };
-        const saveFolders = () => { localStorage.setItem('folders_v2', JSON.stringify(folders)); };
+        const getClients = () => { clients = JSON.parse(localStorage.getItem('clients_v3')) || []; };
+        const saveClients = () => { localStorage.setItem('clients_v3', JSON.stringify(clients)); };
+        const getNotes = () => { notes = JSON.parse(localStorage.getItem('notes_v3')) || []; };
+        const saveNotes = () => { localStorage.setItem('notes_v3', JSON.stringify(notes)); };
+        const getFolders = () => { folders = JSON.parse(localStorage.getItem('folders_v3')) || []; };
+        const saveFolders = () => { localStorage.setItem('folders_v3', JSON.stringify(folders)); };
         
         const seedInitialData = () => {
-            if (localStorage.getItem('seeded_v2')) return;
+            if (localStorage.getItem('seeded_v3')) return;
             clients = [
                 {
-                    id: 'client_1', name: 'QuantumLeap SaaS', niche: 'AI Productivity', tier: 'Gold', color: '#ffd700', status: 'active',
+                    id: 'client_1', name: 'QuantumLeap SaaS', niche: 'AI Productivity', tier: 'Gold', color: '#f59e0b', status: 'active',
                     contact: { name: 'Jane Doe', email: 'jane@quantum.io' }, serviceType: 'SEO & Content Marketing', compensation: 'Monthly Retainer - R85,000', platforms: ['Website', 'YouTube', 'LinkedIn'],
                     analytics: { followers: 12500, engagementRate: 4.2, websiteTraffic: 22300, goals: { followers: 15000, engagementRate: 5.0, websiteTraffic: 25000 }, history: [ { date: '2025-03-01', followers: 8000, websiteTraffic: 15000 }, { date: '2025-04-01', followers: 9500, websiteTraffic: 16500 }, { date: '2025-05-01', followers: 10200, websiteTraffic: 18000 }, { date: '2025-06-01', followers: 11500, websiteTraffic: 20500 }, { date: '2025-07-01', followers: 12500, websiteTraffic: 22300 }, ], customMetrics: [{ id: 'cm_1', name: 'Demo Signups', value: 350, goal: 500 }] },
                     actions: [ { id: 'act_1', text: 'Launch new blog post series on AI ethics', completed: false, priority: 'High', dueDate: '2025-08-20', subtasks: [{id: 'sub_1', text: 'Draft post 1', completed: true},{id: 'sub_2', text: 'Design graphics', completed: false},{id: 'sub_3', text: 'Schedule promotion', completed: false},]}, { id: 'act_2', text: 'Optimize homepage for "productivity tool"', completed: true, priority: 'High', dueDate: '2025-08-01', subtasks: [] }, { id: 'act_3', text: 'A/B test new ad creatives', completed: false, priority: 'Medium', dueDate: '2025-09-05', subtasks: [] }, { id: 'act_4', text: 'Update Q3 roadmap', completed: false, priority: 'Low', dueDate: '2025-08-25', subtasks: [] }, ],
@@ -279,7 +298,7 @@
                     financials: { expenses: [{id: 'exp_1', description: 'Ad Spend', amount: 15000, type: 'Ongoing'}] }, timeLogs: []
                 },
                 {
-                    id: 'client_2', name: 'Dr. Anya Sharma', niche: 'Holistic Health', tier: 'Silver', color: '#c0c0c0', status: 'active',
+                    id: 'client_2', name: 'Dr. Anya Sharma', niche: 'Holistic Health', tier: 'Silver', color: '#60a5fa', status: 'active',
                     contact: { name: 'Anya Sharma', email: 'contact@anyasharma.com' }, serviceType: 'Social Media Management', compensation: 'R45,000/mo + 10% Ad Spend', platforms: ['Instagram', 'TikTok', 'Facebook'],
                     analytics: { followers: 88000, engagementRate: 7.8, websiteTraffic: 12000, goals: { followers: 100000 }, history: [ { date: '2025-03-01', followers: 92000, websiteTraffic: 15000 }, { date: '2025-04-01', followers: 91000, websiteTraffic: 14000 }, { date: '2025-05-01', followers: 89500, websiteTraffic: 13200 }, { date: '2025-06-01', followers: 88200, websiteTraffic: 12500 }, { date: '2025-07-01', followers: 88000, websiteTraffic: 12000 }, ], customMetrics: [] },
                     actions: [{ id: 'act_5', text: 'Collaborate with a fitness influencer', completed: false, priority: 'Medium', dueDate: '2025-09-01', subtasks: [] }], links: [], winsLessons: '', competitors: [], team: [], milestones: [], financials: { expenses: [] }, timeLogs: []
@@ -291,7 +310,7 @@
                 { id: 'note_2', title: 'Influencer Outreach Ideas', content: 'Potential collaborators for Dr. Sharma:<ul><li>FitLife with Jess</li><li>Mindful Mike</li><li>The Yoga Hub</li></ul>', linkedClientIds: ['client_2'], folderId: 'folder_1', tags: ['#ideas', '#social-media'], isPinned: false, createdAt: new Date('2025-07-20').toISOString(), updatedAt: new Date('2025-07-20').toISOString() }
             ];
             saveClients(); saveNotes(); saveFolders();
-            localStorage.setItem('seeded_v2', 'true');
+            localStorage.setItem('seeded_v3', 'true');
         };
 
         const addClient = (clientData) => { const newClient = { id: `client_${Date.now()}`, status: 'active', analytics: { followers: 0, engagementRate: 0, websiteTraffic: 0, goals: {}, history: [], customMetrics: [] }, actions: document.getElementById('applyOnboarding').checked ? JSON.parse(JSON.stringify(ONBOARDING_CHECKLIST)) : [], links: [], winsLessons: '', competitors: [], team: [], milestones: [], timeLogs: [], financials: { expenses: [] }, ...clientData }; clients.push(newClient); saveClients(); return newClient; };
@@ -338,19 +357,19 @@
 
         const renderClientList = () => { const showArchived = showArchivedEl.checked; const searchTerm = clientSearchEl.value.toLowerCase(); const filteredClients = clients.filter(c => (showArchived || c.status === 'active') && c.name.toLowerCase().includes(searchTerm)); clientListEl.innerHTML = filteredClients.map(client => { const isActive = client.id === activeClientId; return `<li class="sidebar-item cursor-pointer p-3 text-slate-300 ${isActive ? 'active' : ''}" data-client-id="${client.id}" style="border-left-color: ${isActive ? client.color : 'transparent'};"> ${client.name} ${client.status === 'archived' ? `<span class="text-xs text-slate-500 ml-2">(Archived)</span>` : ''} </li>`; }).join('') || '<li class="text-slate-500 px-4">No clients found.</li>'; };
         const renderGlobalDashboard = () => { let allActions = []; clients.filter(c => c.status === 'active').forEach(client => (client.actions || []).forEach(action => !action.completed && allActions.push({ ...action, clientName: client.name, clientColor: client.color, clientId: client.id }))); const today = new Date(); const endOfWeek = new Date(); endOfWeek.setDate(today.getDate() + (6 - today.getDay())); const todayActions = allActions.filter(a => a.dueDate && new Date(a.dueDate).toDateString() === today.toDateString()); const weekActions = allActions.filter(a => a.dueDate && new Date(a.dueDate) > today && new Date(a.dueDate) <= endOfWeek); const upcomingActions = allActions.filter(a => !a.dueDate || new Date(a.dueDate) > endOfWeek); const renderSection = (title, actions) => { let sectionHTML = `<div class="mb-8"><h3 class="text-2xl font-bold text-white mb-4">${title}</h3><div class="space-y-4">`; if (actions.length > 0) { sectionHTML += actions.map(action => renderActionItem(action, action.clientId)).join(''); } else { sectionHTML += '<p class="text-slate-500">No tasks in this period.</p>'; } sectionHTML += `</div></div>`; return sectionHTML; }; globalDashboardEl.innerHTML = `<h2 class="text-4xl font-bold text-white mb-6">Master To-Do List</h2>` + renderSection('Today', todayActions) + renderSection('This Week', weekActions) + renderSection('Upcoming', upcomingActions); };
-        const renderClientDashboard = () => { const client = clients.find(c => c.id === activeClientId); if (!client) return; const tierColors = { Platinum: 'bg-purple-400/20 text-purple-300', Gold: 'bg-yellow-400/20 text-yellow-300', Silver: 'bg-slate-400/20 text-slate-300', Standard: 'bg-blue-400/20 text-blue-300' }; const linkedNotes = notes.filter(note => note.linkedClientIds.includes(client.id)); clientDashboardEl.innerHTML = `<div class="flex flex-wrap items-center justify-between mb-6 gap-4"><div class="flex items-center gap-4"><div class="w-3 h-12 rounded-full" style="background-color: ${client.color};"></div><h2 class="text-4xl font-bold text-white">${client.name}</h2><span class="px-3 py-1 rounded-full text-sm font-semibold ${tierColors[client.tier] || tierColors['Standard']}">${client.tier}</span></div><div><button id="generateReportBtn" class="bg-blue-800/50 hover:bg-blue-700/50 text-blue-300 font-bold py-2 px-4 rounded-lg mr-2">Generate Report</button><button id="archiveClientBtn" class="bg-red-800/50 hover:bg-red-700/50 text-red-300 font-bold py-2 px-4 rounded-lg">${client.status === 'active' ? 'Archive' : 'Unarchive'}</button></div></div><div id="metricsContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">${createMetricCard('Followers', client.analytics.followers, 'followers', client.analytics.goals.followers, '', false)}${createMetricCard('Engagement Rate', client.analytics.engagementRate, 'engagementRate', client.analytics.goals.engagementRate, '%', false)}${createMetricCard('Website Traffic', client.analytics.websiteTraffic, 'websiteTraffic', client.analytics.goals.websiteTraffic, '', false)}${(client.analytics.customMetrics || []).map(m => createMetricCard(m.name, m.value, m.id, m.goal, '', true)).join('')}<button id="addCustomMetricBtn" class="flex items-center justify-center glass-pane hover:bg-dark border-2 border-dashed border-border-color rounded-lg text-slate-400 transition h-full min-h-[160px]"><span class="text-2xl mr-2">+</span> Add Custom Metric</button></div><div class="glass-pane p-6 rounded-lg shadow-lg mb-8"><h3 class="text-xl font-semibold mb-4 text-white">Growth Trajectory</h3><div style="height: 250px;"><canvas id="analyticsChartCanvas"></canvas></div></div><div class="glass-pane p-6 rounded-lg shadow-lg mb-8"><h3 class="text-xl font-semibold mb-4 text-white">Milestone Roadmap</h3><div id="milestonesContainer" class="space-y-4">${renderMilestones(client.milestones)}</div><form id="newMilestoneForm" class="flex gap-2 mt-4"><input type="text" id="newMilestoneText" placeholder="New milestone..." class="p-2 rounded-lg flex-1"><input type="date" id="newMilestoneDate" class="p-2 rounded-lg text-slate-400"><button type="submit" class="accent-gradient-bg text-black font-bold p-2 rounded-lg">Add Milestone</button></form></div><div class="grid grid-cols-1 lg:grid-cols-2 gap-8"><div class="glass-pane p-6 rounded-lg shadow-lg"><div class="flex justify-between items-center mb-4"><h3 class="text-xl font-semibold text-white">Action Center</h3><select id="noteTemplateSelector" class="p-1 rounded-lg text-sm bg-dark border-border-color"><option value="">Use Template...</option>${Object.keys(NOTE_TEMPLATES).map(k => `<option value="${k}">${k}</option>`).join('')}</select></div><div class="mb-4 mx-auto" style="height: 150px; max-width: 250px;"><canvas id="actionPriorityChartCanvas"></canvas></div><div id="actionItems" class="space-y-3 mb-4">${(client.actions || []).map(action => renderActionItem(action, client.id)).join('')}</div><form id="newActionForm" class="grid grid-cols-1 md:grid-cols-4 gap-2"><input type="text" id="newActionInput" placeholder="New action..." class="md:col-span-2 p-3 rounded-lg"><input type="date" id="newActionDueDate" class="p-3 rounded-lg text-slate-400"><select id="newActionPriority" class="p-3 rounded-lg"><option>Medium</option><option>High</option><option>Low</option></select><button type="submit" class="md:col-span-4 accent-gradient-bg hover:opacity-90 text-black font-bold py-2 px-4 rounded-lg mt-2">Add Action</button></form></div><div class="space-y-8">${renderClientProfile(client)}<div class="glass-pane p-6 rounded-lg shadow-lg">${renderTeamHub(client)}</div><div class="glass-pane p-6 rounded-lg shadow-lg">${renderFinancialsHub(client)}</div><div class="glass-pane p-6 rounded-lg shadow-lg">${renderTimeTracker(client)}</div><div class="glass-pane p-6 rounded-lg shadow-lg"><h3 class="text-xl font-semibold mb-4 text-white">Linked Notes</h3><div class="space-y-2">${linkedNotes.length > 0 ? linkedNotes.map(n => `<div class="p-2 rounded-lg bg-dark cursor-pointer note-link" data-note-id="${n.id}">${n.title}</div>`).join('') : '<p class="text-slate-500">No notes linked to this client.</p>'}</div></div><div class="glass-pane p-6 rounded-lg shadow-lg"><h3 class="text-xl font-semibold mb-4 text-white">Wins & Lessons</h3><textarea id="winsLessons" class="w-full h-24 p-3 rounded-lg">${client.winsLessons || ''}</textarea></div><div class="glass-pane p-6 rounded-lg shadow-lg"><h3 class="text-xl font-semibold mb-4 text-white">Client Documents & Links</h3><div id="keyLinks" class="space-y-2 mb-4">${renderKeyLinks(client.links)}</div><form id="newLinkForm" class="flex gap-2"><input type="text" id="newLinkLabel" placeholder="Document or Link Name" class="p-2 rounded-lg flex-1"><input type="url" id="newLinkUrl" placeholder="https://..." class="p-2 rounded-lg flex-1"><button type="submit" class="accent-gradient-bg text-black font-bold p-2 rounded-lg">Add</button></form></div><div class="glass-pane p-6 rounded-lg shadow-lg"><h3 class="text-xl font-semibold mb-4 text-white">Competitor Watch</h3><div id="competitors" class="space-y-2 mb-4">${renderCompetitors(client.competitors)}</div><form id="newCompetitorForm" class="grid grid-cols-3 gap-2"><input type="text" id="newCompetitorName" placeholder="Competitor Name" class="p-2 rounded-lg"><input type="number" id="newCompetitorFollowers" placeholder="Followers" class="p-2 rounded-lg"><input type="number" id="newCompetitorTraffic" placeholder="Traffic" class="p-2 rounded-lg"><button type="submit" class="col-span-3 accent-gradient-bg text-black font-bold p-2 rounded-lg mt-2">Add Competitor</button></form></div></div></div>`; addDashboardEventListeners(); };
+        const renderClientDashboard = () => { const client = clients.find(c => c.id === activeClientId); if (!client) return; const tierColors = { Platinum: 'bg-purple-400/20 text-purple-300', Gold: 'bg-yellow-400/20 text-yellow-300', Silver: 'bg-slate-400/20 text-slate-300', Standard: 'bg-blue-400/20 text-blue-300' }; const linkedNotes = notes.filter(note => note.linkedClientIds.includes(client.id)); clientDashboardEl.innerHTML = `<div class="flex flex-wrap items-center justify-between mb-6 gap-4"><div class="flex items-center gap-4"><div class="w-3 h-12 rounded-full" style="background-color: ${client.color};"></div><h2 class="text-4xl font-bold text-white">${client.name}</h2><span class="px-3 py-1 rounded-full text-sm font-semibold ${tierColors[client.tier] || tierColors['Standard']}">${client.tier}</span></div><div><button id="generateReportBtn" class="bg-blue-800/50 hover:bg-blue-700/50 text-blue-300 font-bold py-2 px-4 rounded-lg mr-2">Generate Report</button><button id="archiveClientBtn" class="bg-red-800/50 hover:bg-red-700/50 text-red-300 font-bold py-2 px-4 rounded-lg">${client.status === 'active' ? 'Archive' : 'Unarchive'}</button></div></div><div id="metricsContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">${createMetricCard('Followers', client.analytics.followers, 'followers', client.analytics.goals.followers, '', false)}${createMetricCard('Engagement Rate', client.analytics.engagementRate, 'engagementRate', client.analytics.goals.engagementRate, '%', false)}${createMetricCard('Website Traffic', client.analytics.websiteTraffic, 'websiteTraffic', client.analytics.goals.websiteTraffic, '', false)}${(client.analytics.customMetrics || []).map(m => createMetricCard(m.name, m.value, m.id, m.goal, '', true)).join('')}<button id="addCustomMetricBtn" class="flex items-center justify-center glass-pane hover:bg-dark border-2 border-dashed border-border-color rounded-lg text-slate-400 transition h-full min-h-[160px]"><span class="text-2xl mr-2">+</span> Add Custom Metric</button></div><div class="glass-pane p-6 rounded-lg shadow-lg mb-8"><h3 class="text-xl font-semibold mb-4 text-white">Growth Trajectory</h3><div style="height: 250px;"><canvas id="analyticsChartCanvas"></canvas></div></div><div class="glass-pane p-6 rounded-lg shadow-lg mb-8"><h3 class="text-xl font-semibold mb-4 text-white">Milestone Roadmap</h3><div id="milestonesContainer" class="space-y-4">${renderMilestones(client.milestones)}</div><form id="newMilestoneForm" class="flex gap-2 mt-4"><input type="text" id="newMilestoneText" placeholder="New milestone..." class="p-2 rounded-lg flex-1"><input type="date" id="newMilestoneDate" class="p-2 rounded-lg text-slate-400"><button type="submit" class="accent-gradient-bg text-black font-bold p-2 rounded-lg btn-primary">Add Milestone</button></form></div><div class="grid grid-cols-1 lg:grid-cols-2 gap-8"><div class="glass-pane p-6 rounded-lg shadow-lg"><div class="flex justify-between items-center mb-4"><h3 class="text-xl font-semibold text-white">Action Center</h3><select id="noteTemplateSelector" class="p-1 rounded-lg text-sm bg-dark border-border-color"><option value="">Use Template...</option>${Object.keys(NOTE_TEMPLATES).map(k => `<option value="${k}">${k}</option>`).join('')}</select></div><div class="mb-4 mx-auto" style="height: 150px; max-width: 250px;"><canvas id="actionPriorityChartCanvas"></canvas></div><div id="actionItems" class="space-y-3 mb-4">${(client.actions || []).map(action => renderActionItem(action, client.id)).join('')}</div><form id="newActionForm" class="grid grid-cols-1 md:grid-cols-4 gap-2"><input type="text" id="newActionInput" placeholder="New action..." class="md:col-span-2 p-3 rounded-lg"><input type="date" id="newActionDueDate" class="p-3 rounded-lg text-slate-400"><select id="newActionPriority" class="p-3 rounded-lg"><option>Medium</option><option>High</option><option>Low</option></select><button type="submit" class="md:col-span-4 accent-gradient-bg hover:opacity-90 text-black font-bold py-2 px-4 rounded-lg mt-2 btn-primary">Add Action</button></form></div><div class="space-y-8">${renderClientProfile(client)}<div class="glass-pane p-6 rounded-lg shadow-lg">${renderTeamHub(client)}</div><div class="glass-pane p-6 rounded-lg shadow-lg">${renderFinancialsHub(client)}</div><div class="glass-pane p-6 rounded-lg shadow-lg">${renderTimeTracker(client)}</div><div class="glass-pane p-6 rounded-lg shadow-lg"><h3 class="text-xl font-semibold mb-4 text-white">Linked Notes</h3><div class="space-y-2">${linkedNotes.length > 0 ? linkedNotes.map(n => `<div class="p-2 rounded-lg bg-dark cursor-pointer note-link" data-note-id="${n.id}">${n.title}</div>`).join('') : '<p class="text-slate-500">No notes linked to this client.</p>'}</div></div><div class="glass-pane p-6 rounded-lg shadow-lg"><h3 class="text-xl font-semibold mb-4 text-white">Wins & Lessons</h3><textarea id="winsLessons" class="w-full h-24 p-3 rounded-lg">${client.winsLessons || ''}</textarea></div><div class="glass-pane p-6 rounded-lg shadow-lg"><h3 class="text-xl font-semibold mb-4 text-white">Client Documents & Links</h3><div id="keyLinks" class="space-y-2 mb-4">${renderKeyLinks(client.links)}</div><form id="newLinkForm" class="flex gap-2"><input type="text" id="newLinkLabel" placeholder="Document or Link Name" class="p-2 rounded-lg flex-1"><input type="url" id="newLinkUrl" placeholder="https://..." class="p-2 rounded-lg flex-1"><button type="submit" class="accent-gradient-bg text-black font-bold p-2 rounded-lg btn-primary">Add</button></form></div><div class="glass-pane p-6 rounded-lg shadow-lg"><h3 class="text-xl font-semibold mb-4 text-white">Competitor Watch</h3><div id="competitors" class="space-y-2 mb-4">${renderCompetitors(client.competitors)}</div><form id="newCompetitorForm" class="grid grid-cols-3 gap-2"><input type="text" id="newCompetitorName" placeholder="Competitor Name" class="p-2 rounded-lg"><input type="number" id="newCompetitorFollowers" placeholder="Followers" class="p-2 rounded-lg"><input type="number" id="newCompetitorTraffic" placeholder="Traffic" class="p-2 rounded-lg"><button type="submit" class="col-span-3 accent-gradient-bg text-black font-bold p-2 rounded-lg mt-2 btn-primary">Add Competitor</button></form></div></div></div>`; addDashboardEventListeners(); };
         const createMetricCard = (title, value, key, goal, unit = '', isCustom) => { const goalValue = parseFloat(goal) || 0; const progress = goalValue > 0 ? (value / goalValue) * 100 : 0; return `<div class="glass-pane p-6 rounded-lg shadow-lg draggable" draggable="true" data-metric-id="${key}"><div class="flex justify-between items-center"><h4 class="text-slate-400 font-medium">${title}</h4>${isCustom ? `<button data-delete-metric-id="${key}" class="text-red-500 text-lg">×</button>` : ''}</div><div class="text-4xl font-bold my-2 text-white"><input type="number" value="${value}" data-metric="${key}" class="w-full bg-transparent focus:outline-none p-1"></div><div class="text-sm text-slate-400 mb-2">Goal: <input type="number" placeholder="Set Goal" value="${goal || ''}" data-goal="${key}" class="w-24 bg-transparent focus:outline-none p-1 rounded focus:bg-dark"> ${unit}</div><div class="progress-bar w-full h-2 rounded-full"><div class="progress-bar-fill h-2 rounded-full" style="width: ${Math.min(progress, 100)}%;"></div></div></div>`; };
-        const renderActionItem = (action, clientId) => { const client = clients.find(c => c.id === clientId); const subtasks = action.subtasks || []; const completedSubtasks = subtasks.filter(st => st.completed).length; const progress = subtasks.length > 0 ? (completedSubtasks / subtasks.length) * 100 : (action.completed ? 100 : 0); const priorityColors = {'High':'border-red-500','Medium':'border-yellow-500','Low':'border-blue-500'}; return ` <div class="p-3 rounded-lg bg-dark border-l-4 ${priorityColors[action.priority] || 'border-slate-500'}"> <div class="flex items-center justify-between"> <div class="flex-1"><label class="flex items-center space-x-3"><input type="checkbox" data-action-id="${action.id}" data-client-id="${clientId}" ${action.completed ? 'checked' : ''} class="form-checkbox h-5 w-5 text-accent-dark bg-dark border-border-color rounded focus:ring-accent-dark"><span class="${action.completed ? 'line-through text-slate-500' : 'text-slate-200'}">${action.text}</span></label></div> <div class="text-sm text-slate-400 mr-4">${action.dueDate ? new Date(action.dueDate).toLocaleDateString() : 'No date'}</div> ${client ? `<span class="font-semibold text-sm mr-4" style="color: ${client.color};">${client.name}</span>` : ''} <button data-delete-action-id="${action.id}" data-client-id="${clientId}" class="text-red-500 hover:text-red-400 font-bold text-lg">×</button> </div> <div class="pl-8 mt-2"> <div class="progress-bar w-full h-1 rounded-full mb-2"><div class="progress-bar-fill h-1 rounded-full" style="width: ${progress}%;"></div></div> <div class="space-y-1"> ${subtasks.map(st => ` <label class="flex items-center space-x-2 text-sm"> <input type="checkbox" data-subtask-id="${st.id}" data-action-id="${action.id}" data-client-id="${clientId}" ${st.completed ? 'checked' : ''} class="form-checkbox h-4 w-4 text-accent-dark bg-dark border-border-color rounded"> <span class="${st.completed ? 'line-through text-slate-500' : 'text-slate-300'}">${st.text}</span> </label> `).join('')} </div> <form class="new-subtask-form flex gap-2 mt-2" data-action-id="${action.id}" data-client-id="${clientId}"> <input type="text" placeholder="Add sub-task..." class="new-subtask-input flex-grow p-1 text-sm rounded-md"> <button type="submit" class="text-xs accent-gradient-bg text-black font-bold px-2 rounded-md">Add</button> </form> </div> </div>`; };
+        const renderActionItem = (action, clientId) => { const client = clients.find(c => c.id === clientId); const subtasks = action.subtasks || []; const completedSubtasks = subtasks.filter(st => st.completed).length; const progress = subtasks.length > 0 ? (completedSubtasks / subtasks.length) * 100 : (action.completed ? 100 : 0); const priorityColors = {'High':'border-red-500','Medium':'border-yellow-500','Low':'border-blue-500'}; return ` <div class="p-3 rounded-lg bg-dark border-l-4 ${priorityColors[action.priority] || 'border-slate-500'}"> <div class="flex items-center justify-between"> <div class="flex-1"><label class="flex items-center space-x-3"><input type="checkbox" data-action-id="${action.id}" data-client-id="${clientId}" ${action.completed ? 'checked' : ''} class="form-checkbox h-5 w-5 text-accent-dark bg-dark border-border-color rounded focus:ring-accent-dark"><span class="${action.completed ? 'line-through text-slate-500' : 'text-slate-200'}">${action.text}</span></label></div> <div class="text-sm text-slate-400 mr-4">${action.dueDate ? new Date(action.dueDate).toLocaleDateString() : 'No date'}</div> ${client ? `<span class="font-semibold text-sm mr-4" style="color: ${client.color};">${client.name}</span>` : ''} <button data-delete-action-id="${action.id}" data-client-id="${clientId}" class="text-red-500 hover:text-red-400 font-bold text-lg">×</button> </div> <div class="pl-8 mt-2"> <div class="progress-bar w-full h-1 rounded-full mb-2"><div class="progress-bar-fill h-1 rounded-full" style="width: ${progress}%;"></div></div> <div class="space-y-1"> ${subtasks.map(st => ` <label class="flex items-center space-x-2 text-sm"> <input type="checkbox" data-subtask-id="${st.id}" data-action-id="${action.id}" data-client-id="${clientId}" ${st.completed ? 'checked' : ''} class="form-checkbox h-4 w-4 text-accent-dark bg-dark border-border-color rounded"> <span class="${st.completed ? 'line-through text-slate-500' : 'text-slate-300'}">${st.text}</span> </label> `).join('')} </div> <form class="new-subtask-form flex gap-2 mt-2" data-action-id="${action.id}" data-client-id="${clientId}"> <input type="text" placeholder="Add sub-task..." class="new-subtask-input flex-grow p-1 text-sm rounded-md"> <button type="submit" class="text-xs accent-gradient-bg text-black font-bold px-2 rounded-md btn-primary">Add</button> </form> </div> </div>`; };
         const renderKeyLinks = (links) => (links || []).map((link, i) => `<div class="flex items-center justify-between"><a href="${link.url}" target="_blank" class="text-accent-light hover:underline">${link.label}</a><button data-delete-link-index="${i}" class="text-red-500 text-lg">×</button></div>`).join('') || '<p class="text-slate-500">No documents or links added.</p>';
         const renderCompetitors = (comps) => (comps || []).map((c, i) => `<div class="grid grid-cols-3 gap-2 text-sm"><span class="text-slate-300">${c.name}</span><span>${c.followers.toLocaleString()} followers</span><span>${c.traffic.toLocaleString()} traffic</span></div>`).join('') || '<p class="text-slate-500">No competitors added.</p>';
         const renderMilestones = (milestones) => (milestones || []).sort((a,b) => new Date(a.date) - new Date(b.date)).map(m => `<div class="flex items-center gap-4"><input type="checkbox" data-milestone-id="${m.id}" ${m.completed ? 'checked' : ''} class="form-checkbox h-5 w-5 text-accent-dark bg-dark border-border-color rounded"><div class="flex-1"><p class="${m.completed ? 'line-through text-slate-500' : ''}">${m.text}</p><p class="text-sm text-slate-400">${new Date(m.date).toLocaleDateString()}</p></div></div>`).join('') || '<p class="text-slate-500">No milestones set.</p>';
-        const renderTeamHub = (client) => { const team = client.team || []; let teamHTML = `<h3 class="text-xl font-semibold mb-4 text-white">Project Team</h3><div id="teamMemberList" class="space-y-3 mb-4">`; if (team.length > 0) { teamHTML += team.map(member => ` <div class="p-3 rounded-lg bg-dark"> <div class="flex justify-between items-start"> <div> <h4 class="font-bold text-white">${member.name} <span class="text-xs font-normal px-2 py-1 rounded-full ${member.type === 'Internal' ? 'bg-green-500/20 text-green-300' : 'bg-purple-500/20 text-purple-300'}">${member.type}</span></h4> <p class="text-sm text-slate-400">${member.role}</p> </div> <button data-delete-team-id="${member.id}" class="text-red-500 hover:text-red-400 font-bold text-lg">×</button> </div> <div class="text-sm text-slate-300 mt-2"> <p><strong>Duration:</strong> ${member.duration}</p> <p><strong>Compensation:</strong> ${member.compensation}</p> </div> </div> `).join(''); } else { teamHTML += `<p class="text-slate-500">No team members assigned.</p>`; } teamHTML += `</div><form id="newTeamMemberForm" class="space-y-2"><div class="grid grid-cols-2 gap-2"><input type="text" id="newTeamMemberName" placeholder="Name" class="p-2 rounded-lg"><input type="text" id="newTeamMemberRole" placeholder="Role" class="p-2 rounded-lg"></div><div class="grid grid-cols-2 gap-2"><input type="text" id="newTeamMemberDuration" placeholder="Duration" class="p-2 rounded-lg"><input type="text" id="newTeamMemberCompensation" placeholder="Compensation (ZAR)" class="p-2 rounded-lg"></div><select id="newTeamMemberType" class="p-2 rounded-lg w-full"><option value="Internal">Internal</option><option value="Outsourced">Outsourced</option></select><button type="submit" class="w-full accent-gradient-bg text-black font-bold p-2 rounded-lg mt-2">Add Team Member</button></form>`; return teamHTML; };
-        const renderClientProfile = (client) => { return ` <div id="clientProfileCard" class="glass-pane p-6 rounded-lg shadow-lg profile-view"> <div class="flex justify-between items-center mb-4"> <h3 class="text-xl font-semibold text-white">Client Profile</h3> <button id="editProfileBtn" class="accent-gradient-bg text-black text-sm font-bold py-1 px-3 rounded-lg">Edit Profile</button> </div> <div class="space-y-4 text-slate-400"> <div> <h4 class="font-semibold text-slate-300">Primary Contact</h4> <p class="profile-view-field">${client.contact.name || 'N/A'} - ${client.contact.email || 'N/A'}</p> <div class="profile-edit-field grid grid-cols-2 gap-2"> <input type="text" id="editContactName" value="${client.contact.name || ''}" class="p-2 rounded-lg"> <input type="email" id="editContactEmail" value="${client.contact.email || ''}" class="p-2 rounded-lg"> </div> </div> <div> <h4 class="font-semibold text-slate-300">Service Agreement</h4> <p class="profile-view-field"><strong>Service:</strong> ${client.serviceType || 'N/A'}</p> <input type="text" id="editServiceType" value="${client.serviceType || ''}" class="profile-edit-field p-2 rounded-lg w-full"> <p class="profile-view-field"><strong>Compensation:</strong> ${client.compensation || 'N/A'}</p> <input type="text" id="editCompensation" value="${client.compensation || ''}" class="profile-edit-field p-2 rounded-lg w-full mt-1"> </div> <div> <h4 class="font-semibold text-slate-300">Active Platforms</h4> <div class="profile-view-field flex flex-wrap gap-2 mt-2"> ${(client.platforms && client.platforms.length) ? client.platforms.map(p => `<span class="bg-dark px-2 py-1 rounded-full text-xs">${p}</span>`).join('') : '<p>No platforms specified.</p>'} </div> <div id="editPlatforms" class="profile-edit-field grid grid-cols-2 sm:grid-cols-3 gap-2 mt-2"> <label class="flex items-center space-x-2"><input type="checkbox" value="Instagram" ${client.platforms.includes('Instagram') ? 'checked' : ''}><span>Instagram</span></label> <label class="flex items-center space-x-2"><input type="checkbox" value="Facebook" ${client.platforms.includes('Facebook') ? 'checked' : ''}><span>Facebook</span></label> <label class="flex items-center space-x-2"><input type="checkbox" value="TikTok" ${client.platforms.includes('TikTok') ? 'checked' : ''}><span>TikTok</span></label> <label class="flex items-center space-x-2"><input type="checkbox" value="YouTube" ${client.platforms.includes('YouTube') ? 'checked' : ''}><span>YouTube</span></label> <label class="flex items-center space-x-2"><input type="checkbox" value="LinkedIn" ${client.platforms.includes('LinkedIn') ? 'checked' : ''}><span>LinkedIn</span></label> <label class="flex items-center space-x-2"><input type="checkbox" value="Website" ${client.platforms.includes('Website') ? 'checked' : ''}><span>Website</span></label> </div> </div> </div> </div>`; };
+        const renderTeamHub = (client) => { const team = client.team || []; let teamHTML = `<h3 class="text-xl font-semibold mb-4 text-white">Project Team</h3><div id="teamMemberList" class="space-y-3 mb-4">`; if (team.length > 0) { teamHTML += team.map(member => ` <div class="p-3 rounded-lg bg-dark"> <div class="flex justify-between items-start"> <div> <h4 class="font-bold text-white">${member.name} <span class="text-xs font-normal px-2 py-1 rounded-full ${member.type === 'Internal' ? 'bg-green-500/20 text-green-300' : 'bg-purple-500/20 text-purple-300'}">${member.type}</span></h4> <p class="text-sm text-slate-400">${member.role}</p> </div> <button data-delete-team-id="${member.id}" class="text-red-500 hover:text-red-400 font-bold text-lg">×</button> </div> <div class="text-sm text-slate-300 mt-2"> <p><strong>Duration:</strong> ${member.duration}</p> <p><strong>Compensation:</strong> ${member.compensation}</p> </div> </div> `).join(''); } else { teamHTML += `<p class="text-slate-500">No team members assigned.</p>`; } teamHTML += `</div><form id="newTeamMemberForm" class="space-y-2"><div class="grid grid-cols-2 gap-2"><input type="text" id="newTeamMemberName" placeholder="Name" class="p-2 rounded-lg"><input type="text" id="newTeamMemberRole" placeholder="Role" class="p-2 rounded-lg"></div><div class="grid grid-cols-2 gap-2"><input type="text" id="newTeamMemberDuration" placeholder="Duration" class="p-2 rounded-lg"><input type="text" id="newTeamMemberCompensation" placeholder="Compensation (ZAR)" class="p-2 rounded-lg"></div><select id="newTeamMemberType" class="p-2 rounded-lg w-full"><option value="Internal">Internal</option><option value="Outsourced">Outsourced</option></select><button type="submit" class="w-full accent-gradient-bg text-black font-bold p-2 rounded-lg mt-2 btn-primary">Add Team Member</button></form>`; return teamHTML; };
+        const renderClientProfile = (client) => { return ` <div id="clientProfileCard" class="glass-pane p-6 rounded-lg shadow-lg profile-view"> <div class="flex justify-between items-center mb-4"> <h3 class="text-xl font-semibold text-white">Client Profile</h3> <button id="editProfileBtn" class="accent-gradient-bg text-black text-sm font-bold py-1 px-3 rounded-lg btn-primary">Edit Profile</button> </div> <div class="space-y-4 text-slate-400"> <div> <h4 class="font-semibold text-slate-300">Primary Contact</h4> <p class="profile-view-field">${client.contact.name || 'N/A'} - ${client.contact.email || 'N/A'}</p> <div class="profile-edit-field grid grid-cols-2 gap-2"> <input type="text" id="editContactName" value="${client.contact.name || ''}" class="p-2 rounded-lg"> <input type="email" id="editContactEmail" value="${client.contact.email || ''}" class="p-2 rounded-lg"> </div> </div> <div> <h4 class="font-semibold text-slate-300">Service Agreement</h4> <p class="profile-view-field"><strong>Service:</strong> ${client.serviceType || 'N/A'}</p> <input type="text" id="editServiceType" value="${client.serviceType || ''}" class="profile-edit-field p-2 rounded-lg w-full"> <p class="profile-view-field"><strong>Compensation:</strong> ${client.compensation || 'N/A'}</p> <input type="text" id="editCompensation" value="${client.compensation || ''}" class="profile-edit-field p-2 rounded-lg w-full mt-1"> </div> <div> <h4 class="font-semibold text-slate-300">Active Platforms</h4> <div class="profile-view-field flex flex-wrap gap-2 mt-2"> ${(client.platforms && client.platforms.length) ? client.platforms.map(p => `<span class="bg-dark px-2 py-1 rounded-full text-xs">${p}</span>`).join('') : '<p>No platforms specified.</p>'} </div> <div id="editPlatforms" class="profile-edit-field grid grid-cols-2 sm:grid-cols-3 gap-2 mt-2"> <label class="flex items-center space-x-2"><input type="checkbox" value="Instagram" ${client.platforms.includes('Instagram') ? 'checked' : ''}><span>Instagram</span></label> <label class="flex items-center space-x-2"><input type="checkbox" value="Facebook" ${client.platforms.includes('Facebook') ? 'checked' : ''}><span>Facebook</span></label> <label class="flex items-center space-x-2"><input type="checkbox" value="TikTok" ${client.platforms.includes('TikTok') ? 'checked' : ''}><span>TikTok</span></label> <label class="flex items-center space-x-2"><input type="checkbox" value="YouTube" ${client.platforms.includes('YouTube') ? 'checked' : ''}><span>YouTube</span></label> <label class="flex items-center space-x-2"><input type="checkbox" value="LinkedIn" ${client.platforms.includes('LinkedIn') ? 'checked' : ''}><span>LinkedIn</span></label> <label class="flex items-center space-x-2"><input type="checkbox" value="Website" ${client.platforms.includes('Website') ? 'checked' : ''}><span>Website</span></label> </div> </div> </div> </div>`; };
         const renderAnalyticsChart = (client) => { if (analyticsChart) analyticsChart.destroy(); const canvas = document.getElementById('analyticsChartCanvas'); if (!canvas) return; const ctx = canvas.getContext('2d'); const history = client.analytics.history || []; if (history.length === 0) { canvas.style.display = 'none'; return; } canvas.style.display = 'block'; const accentLight = getComputedStyle(document.body).getPropertyValue('--accent-light').trim(); const textSecondary = getComputedStyle(document.body).getPropertyValue('--text-secondary').trim(); const gradient = ctx.createLinearGradient(0, 0, 0, canvas.offsetHeight); gradient.addColorStop(0, colorToRgba(accentLight, 0.4)); gradient.addColorStop(1, colorToRgba(accentLight, 0)); analyticsChart = new Chart(ctx, { type: 'line', data: { labels: history.map(h => new Date(h.date).toLocaleDateString('en-US', { month: 'short' })), datasets: [ { label: 'Followers', data: history.map(h => h.followers), borderColor: accentLight, backgroundColor: gradient, tension: 0.4, fill: true, yAxisID: 'y' }, { label: 'Website Traffic', data: history.map(h => h.websiteTraffic), borderColor: textSecondary, tension: 0.4, fill: false, yAxisID: 'y1' } ] }, options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, plugins: { legend: { labels: { color: '#9ca3af' } } }, scales: { y: { type: 'linear', display: true, position: 'left', ticks: { color: accentLight }, grid: { color: '#374151' } }, y1: { type: 'linear', display: true, position: 'right', ticks: { color: textSecondary }, grid: { drawOnChartArea: false } }, x: { ticks: { color: '#9ca3af' }, grid: { color: '#374151' } } } } }); };
         const renderActionPriorityChart = (client) => { if (actionPriorityChart) actionPriorityChart.destroy(); const canvas = document.getElementById('actionPriorityChartCanvas'); if (!canvas) return; const ctx = canvas.getContext('2d'); const actions = client.actions || []; const priorityCounts = { High: 0, Medium: 0, Low: 0 }; actions.forEach(action => { if (!action.completed && priorityCounts.hasOwnProperty(action.priority)) { priorityCounts[action.priority]++; } }); const total = Object.values(priorityCounts).reduce((a, b) => a + b, 0); if (total === 0) { canvas.style.display = 'none'; return; } canvas.style.display = 'block'; actionPriorityChart = new Chart(ctx, { type: 'doughnut', data: { labels: ['High', 'Medium', 'Low'], datasets: [{ data: [priorityCounts.High, priorityCounts.Medium, priorityCounts.Low], backgroundColor: ['#ef4444', '#f59e0b', '#3b82f6'], borderColor: '#1f2937', borderWidth: 2 }] }, options: { responsive: true, maintainAspectRatio: false, cutout: '70%', plugins: { legend: { position: 'right', labels: { color: '#9ca3af', boxWidth: 12 } } } } }); };
         const renderCalendar = () => { const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]; const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']; let firstDay = new Date(calendarDate.getFullYear(), calendarDate.getMonth(), 1).getDay(); let daysInMonth = new Date(calendarDate.getFullYear(), calendarDate.getMonth() + 1, 0).getDate(); let allEvents = []; clients.forEach(c => { (c.actions || []).filter(a => a.dueDate).forEach(a => allEvents.push({ date: new Date(a.dueDate), text: a.text, client: c })); (c.milestones || []).filter(m => m.date).forEach(m => allEvents.push({ date: new Date(m.date), text: `MILESTONE: ${m.text}`, client: c })); }); let calendarHTML = `<div class="glass-pane p-6 rounded-lg shadow-lg"><div class="flex justify-between items-center mb-4"><button id="prevMonth" class="p-2 rounded-lg hover:bg-dark">&lt;</button><h2 class="text-2xl font-bold">${monthNames[calendarDate.getMonth()]} ${calendarDate.getFullYear()}</h2><button id="nextMonth" class="p-2 rounded-lg hover:bg-dark">&gt;</button></div><div class="grid grid-cols-7 gap-2 text-center text-slate-400 mb-2">${daysOfWeek.map(day => `<div>${day}</div>`).join('')}</div><div id="calendarGrid" class="grid grid-cols-7 gap-2">`; for(let i = 0; i < firstDay; i++) { calendarHTML += '<div></div>'; } for(let day = 1; day <= daysInMonth; day++) { const dayDate = new Date(calendarDate.getFullYear(), calendarDate.getMonth(), day); const dayEvents = allEvents.filter(e => e.date.toDateString() === dayDate.toDateString()); calendarHTML += `<div class="p-2 border border-border-color rounded-lg h-28 overflow-y-auto relative ${dayDate.toDateString() === new Date().toDateString() ? 'bg-accent-dark/20' : ''}" data-date="${dayDate.toISOString()}"><div class="font-bold text-right">${day}</div><div class="space-y-1 mt-1">${dayEvents.map(e => `<div class="text-xs p-1 rounded" style="background-color:${e.client.color}; color: #000;">${e.text}</div>`).join('')}</div></div>`; } calendarHTML += '</div></div>'; calendarViewEl.innerHTML = calendarHTML; document.getElementById('prevMonth').addEventListener('click', () => { calendarDate.setMonth(calendarDate.getMonth() - 1); renderCalendar(); }); document.getElementById('nextMonth').addEventListener('click', () => { calendarDate.setMonth(calendarDate.getMonth() + 1); renderCalendar(); }); };
-        const renderTimeTracker = (client) => { const totalHours = (client.timeLogs || []).reduce((acc, log) => acc + log.hours, 0); return ` <h3 class="text-xl font-semibold mb-4 text-white">Time Tracker</h3> <div class="text-center mb-4"> <div id="timerDisplay" class="text-5xl font-bold tracking-widest">${formatTime(timerState.elapsedTime)}</div> <div class="text-slate-400">Total Logged: ${totalHours.toFixed(2)} hours</div> </div> <div class="flex justify-center gap-4 mb-4"> <button id="startTimerBtn" class="bg-green-500/80 hover:bg-green-400/80 p-3 rounded-full w-12 h-12"><i class="fa-solid fa-play"></i></button> <button id="pauseTimerBtn" class="bg-yellow-500/80 hover:bg-yellow-400/80 p-3 rounded-full w-12 h-12"><i class="fa-solid fa-pause"></i></button> <button id="resetTimerBtn" class="bg-red-500/80 hover:bg-red-400/80 p-3 rounded-full w-12 h-12"><i class="fa-solid fa-stop"></i></button> </div> <button id="logTimeBtn" class="w-full accent-gradient-bg text-black font-bold p-2 rounded-lg">Log Time</button>`; };
-        const renderFinancialsHub = (client) => { const financials = client.financials || { expenses: [] }; const totalExpenses = financials.expenses.reduce((acc, ex) => acc + ex.amount, 0); const income = parseFloat(String(client.compensation).replace(/[^0-9.-]+/g,"")) || 0; const netProfit = income - totalExpenses; let financialsHTML = `<h3 class="text-xl font-semibold mb-4 text-white">Project Financials</h3> <div class="grid grid-cols-2 gap-4 mb-4 text-center"> <div><p class="text-slate-400 text-sm">Total Expenses</p><p class="text-2xl font-bold text-red-400">R ${totalExpenses.toLocaleString()}</p></div> <div><p class="text-slate-400 text-sm">Net Profit</p><p class="text-2xl font-bold ${netProfit >= 0 ? 'text-green-400' : 'text-red-400'}">R ${netProfit.toLocaleString()}</p></div> </div> <div id="expenseList" class="space-y-2 mb-4">`; if (financials.expenses.length > 0) { financialsHTML += financials.expenses.map(ex => ` <div class="p-2 rounded-lg bg-dark flex justify-between items-center"> <div> <p>${ex.description} <span class="text-xs ${ex.type === 'Ongoing' ? 'text-yellow-400' : 'text-blue-400'}">(${ex.type})</span></p> <p class="text-sm text-slate-400">R ${ex.amount.toLocaleString()}</p> </div> <button data-delete-expense-id="${ex.id}" class="text-red-500 text-lg">×</button> </div> `).join(''); } else { financialsHTML += `<p class="text-slate-500 text-sm">No expenses logged.</p>`; } financialsHTML += `</div><form id="newExpenseForm" class="space-y-2"><input type="text" id="newExpenseDescription" placeholder="Expense Description" class="p-2 rounded-lg w-full"><div class="grid grid-cols-2 gap-2"><input type="number" id="newExpenseAmount" placeholder="Amount (ZAR)" class="p-2 rounded-lg"><select id="newExpenseType" class="p-2 rounded-lg"><option>Once-off</option><option>Ongoing</option></select></div><button type="submit" class="w-full accent-gradient-bg text-black font-bold p-2 rounded-lg mt-2">Add Expense</button></form>`; return financialsHTML; };
+        const renderTimeTracker = (client) => { const totalHours = (client.timeLogs || []).reduce((acc, log) => acc + log.hours, 0); const isTimerForThisClient = timerState.running && timerState.activeClientId === client.id; return ` <h3 class="text-xl font-semibold mb-4 text-white">Time Tracker</h3> <div class="text-center mb-4"> <div id="timerDisplay" class="text-5xl font-bold tracking-widest">${isTimerForThisClient ? formatTime(timerState.elapsedTime) : '00:00:00'}</div> <div class="text-slate-400">Total Logged: ${totalHours.toFixed(2)} hours</div> </div> <div class="flex justify-center gap-4 mb-4"> <button id="startTimerBtn" class="bg-green-500/80 hover:bg-green-400/80 p-3 rounded-full w-12 h-12 flex items-center justify-center transition-transform hover:scale-110"><i class="fa-solid fa-play"></i></button> <button id="pauseTimerBtn" class="bg-yellow-500/80 hover:bg-yellow-400/80 p-3 rounded-full w-12 h-12 flex items-center justify-center transition-transform hover:scale-110"><i class="fa-solid fa-pause"></i></button> <button id="resetTimerBtn" class="bg-red-500/80 hover:bg-red-400/80 p-3 rounded-full w-12 h-12 flex items-center justify-center transition-transform hover:scale-110"><i class="fa-solid fa-stop"></i></button> </div> <button id="logTimeBtn" class="w-full accent-gradient-bg text-black font-bold p-2 rounded-lg btn-primary">Log Time</button>`; };
+        const renderFinancialsHub = (client) => { const financials = client.financials || { expenses: [] }; const totalExpenses = financials.expenses.reduce((acc, ex) => acc + ex.amount, 0); const income = parseFloat(String(client.compensation).replace(/[^0-9.-]+/g,"")) || 0; const netProfit = income - totalExpenses; let financialsHTML = `<h3 class="text-xl font-semibold mb-4 text-white">Project Financials</h3> <div class="grid grid-cols-2 gap-4 mb-4 text-center"> <div><p class="text-slate-400 text-sm">Total Expenses</p><p class="text-2xl font-bold text-red-400">R ${totalExpenses.toLocaleString()}</p></div> <div><p class="text-slate-400 text-sm">Net Profit</p><p class="text-2xl font-bold ${netProfit >= 0 ? 'text-green-400' : 'text-red-400'}">R ${netProfit.toLocaleString()}</p></div> </div> <div id="expenseList" class="space-y-2 mb-4">`; if (financials.expenses.length > 0) { financialsHTML += financials.expenses.map(ex => ` <div class="p-2 rounded-lg bg-dark flex justify-between items-center"> <div> <p>${ex.description} <span class="text-xs ${ex.type === 'Ongoing' ? 'text-yellow-400' : 'text-blue-400'}">(${ex.type})</span></p> <p class="text-sm text-slate-400">R ${ex.amount.toLocaleString()}</p> </div> <button data-delete-expense-id="${ex.id}" class="text-red-500 text-lg">×</button> </div> `).join(''); } else { financialsHTML += `<p class="text-slate-500 text-sm">No expenses logged.</p>`; } financialsHTML += `</div><form id="newExpenseForm" class="space-y-2"><input type="text" id="newExpenseDescription" placeholder="Expense Description" class="p-2 rounded-lg w-full"><div class="grid grid-cols-2 gap-2"><input type="number" id="newExpenseAmount" placeholder="Amount (ZAR)" class="p-2 rounded-lg"><select id="newExpenseType" class="p-2 rounded-lg"><option>Once-off</option><option>Ongoing</option></select></div><button type="submit" class="w-full accent-gradient-bg text-black font-bold p-2 rounded-lg mt-2 btn-primary">Add Expense</button></form>`; return financialsHTML; };
         
         // --- NOTES VIEW REVAMP ---
         const renderNotesView = () => {
@@ -398,21 +417,21 @@
                     <!-- Notes Sidebar -->
                     <div class="w-full md:w-1/4 lg:w-1/5 flex-shrink-0">
                         <div class="glass-pane p-4 rounded-lg h-full">
-                            <button id="newNoteBtn" class="w-full accent-gradient-bg hover:opacity-90 text-black font-bold py-3 px-4 rounded-lg mb-6">New Note</button>
+                            <button id="newNoteBtn" class="w-full accent-gradient-bg hover:opacity-90 text-black font-bold py-3 px-4 rounded-lg mb-6 btn-primary">New Note</button>
                             
-                            <h3 class="font-semibold text-slate-300 mb-2">Folders</h3>
+                            <h3 class="font-semibold text-slate-400 mb-2 uppercase text-xs tracking-wider">Folders</h3>
                             <ul id="notesFolderList" class="space-y-1 mb-6">
-                                <li class="p-2 rounded-lg cursor-pointer ${notesState.activeFolderId === 'all' ? 'bg-accent-dark/30' : ''}" data-folder-id="all">All Notes</li>
-                                ${folders.map(f => `<li class="p-2 rounded-lg cursor-pointer ${notesState.activeFolderId === f.id ? 'bg-accent-dark/30' : ''}" data-folder-id="${f.id}">${f.name}</li>`).join('')}
+                                <li class="p-2 rounded-lg cursor-pointer transition-colors hover:bg-white/10 ${notesState.activeFolderId === 'all' ? 'bg-accent-dark/30' : ''}" data-folder-id="all">All Notes</li>
+                                ${folders.map(f => `<li class="p-2 rounded-lg cursor-pointer transition-colors hover:bg-white/10 ${notesState.activeFolderId === f.id ? 'bg-accent-dark/30' : ''}" data-folder-id="${f.id}">${f.name}</li>`).join('')}
                             </ul>
                             <form id="newFolderForm" class="flex gap-2 mb-6">
                                 <input type="text" id="newFolderName" placeholder="New Folder" class="p-2 rounded-lg flex-1 text-sm">
-                                <button type="submit" class="accent-gradient-bg text-black font-bold p-2 rounded-lg text-sm">+</button>
+                                <button type="submit" class="accent-gradient-bg text-black font-bold p-2 rounded-lg text-sm btn-primary">+</button>
                             </form>
 
-                            <h3 class="font-semibold text-slate-300 mb-2">Tags</h3>
+                            <h3 class="font-semibold text-slate-400 mb-2 uppercase text-xs tracking-wider">Tags</h3>
                             <div id="notesTagList" class="flex flex-wrap gap-2">
-                                ${allTags.map(tag => `<span class="px-3 py-1 rounded-full text-xs cursor-pointer ${notesState.activeTag === tag ? 'accent-gradient-bg text-black font-bold' : 'bg-dark'}" data-tag="${tag}">${tag}</span>`).join('')}
+                                ${allTags.map(tag => `<span class="px-3 py-1 rounded-full text-xs cursor-pointer transition-colors ${notesState.activeTag === tag ? 'accent-gradient-bg text-black font-bold' : 'bg-dark hover:bg-white/10'}" data-tag="${tag}">${tag}</span>`).join('')}
                                 ${notesState.activeTag ? `<span class="px-3 py-1 rounded-full text-xs cursor-pointer bg-red-800/80" id="clearTagFilter">Clear</span>` : ''}
                             </div>
                         </div>
@@ -451,7 +470,7 @@
                 tempDiv.innerHTML = note.content || '';
                 const plainTextContent = tempDiv.textContent || tempDiv.innerText || '';
 
-                return `<div class="glass-pane p-6 rounded-lg shadow-lg flex flex-col justify-between relative">
+                return `<div class="glass-pane p-6 rounded-lg shadow-lg flex flex-col justify-between relative transition-transform hover:scale-105">
                     <button class="absolute top-2 right-2 text-xl hover:text-accent-light pin-note-btn" data-note-id="${note.id}">
                         <i class="${note.isPinned ? 'fa-solid text-accent-light' : 'fa-regular'} fa-thumbtack"></i>
                     </button>
@@ -528,7 +547,12 @@
             closeModal(document.getElementById('noteEditorModal'));
             renderNotesView();
         };
-        const handleDashboardInteraction = (e) => { 
+        const handleDashboardInteraction = (e) => {
+            const profileCard = e.target.closest('#clientProfileCard');
+            if (profileCard && profileCard.classList.contains('profile-edit')) {
+                return; 
+            }
+
             const clientId = e.target.dataset.clientId || activeClientId;
             const client = clients.find(c => c.id === clientId); 
             if (!client) return; 
@@ -615,7 +639,67 @@
         const openModal = (modal) => { modal.style.display = 'block'; };
         const closeModal = (modal) => { modal.style.display = 'none'; };
         const colorToRgba = (color, alpha) => { const r = parseInt(color.slice(1, 3), 16), g = parseInt(color.slice(3, 5), 16), b = parseInt(color.slice(5, 7), 16); return `rgba(${r}, ${g}, ${b}, ${alpha})`; };
-        const addDashboardEventListeners = () => { document.getElementById('archiveClientBtn').addEventListener('click', () => { const c = clients.find(c=>c.id===activeClientId); c.status = c.status==='active'?'archived':'active'; updateClient(activeClientId, c); renderApp(); }); document.getElementById('generateReportBtn').addEventListener('click', () => { const reportEl = document.getElementById('clientDashboard'); html2canvas(reportEl, { backgroundColor: '#000000' }).then(canvas => { const imgData = canvas.toDataURL('image/png'); const { jsPDF } = window.jspdf; const pdf = new jsPDF('p', 'mm', 'a4'); const pdfWidth = pdf.internal.pageSize.getWidth(); const pdfHeight = (canvas.height * pdfWidth) / canvas.width; pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight); pdf.save(`${clients.find(c=>c.id===activeClientId).name}-report.pdf`); }); }); document.getElementById('addCustomMetricBtn').addEventListener('click', () => openModal(document.getElementById('customMetricModal'))); document.getElementById('noteTemplateSelector').addEventListener('change', (e) => { const template = NOTE_TEMPLATES[e.target.value]; if(template) document.getElementById('newActionInput').value = template; }); clientDashboardEl.addEventListener('change', handleDashboardInteraction); clientDashboardEl.addEventListener('blur', handleDashboardInteraction, true); clientDashboardEl.addEventListener('click', handleDashboardInteraction); clientDashboardEl.addEventListener('submit', handleNewFormSubmits); const container = document.getElementById('metricsContainer'); let draggedItem = null; container.addEventListener('dragstart', e => { if(e.target.classList.contains('draggable')) { draggedItem = e.target; setTimeout(() => e.target.classList.add('dragging'), 0); } }); container.addEventListener('dragend', e => { if(draggedItem) { draggedItem.classList.remove('dragging'); draggedItem = null; } }); container.addEventListener('dragover', e => { e.preventDefault(); const afterElement = getDragAfterElement(container, e.clientY); const draggable = document.querySelector('.dragging'); if (afterElement == null) { container.appendChild(draggable); } else { container.insertBefore(draggable, afterElement); } }); 
+        
+        const updateTimerDisplay = () => {
+            const timerDisplay = document.getElementById('timerDisplay');
+            if (timerDisplay && timerState.running) {
+                const now = Date.now();
+                timerState.elapsedTime += now - timerState.startTime;
+                timerState.startTime = now;
+                timerDisplay.textContent = formatTime(timerState.elapsedTime);
+            }
+        };
+
+        const addDashboardEventListeners = () => { 
+            document.getElementById('archiveClientBtn').addEventListener('click', () => { const c = clients.find(c=>c.id===activeClientId); c.status = c.status==='active'?'archived':'active'; updateClient(activeClientId, c); renderApp(); }); 
+            document.getElementById('generateReportBtn').addEventListener('click', () => { const reportEl = document.getElementById('clientDashboard'); html2canvas(reportEl, { backgroundColor: '#0a0a0a' }).then(canvas => { const imgData = canvas.toDataURL('image/png'); const { jsPDF } = window.jspdf; const pdf = new jsPDF('p', 'mm', 'a4'); const pdfWidth = pdf.internal.pageSize.getWidth(); const pdfHeight = (canvas.height * pdfWidth) / canvas.width; pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight); pdf.save(`${clients.find(c=>c.id===activeClientId).name}-report.pdf`); }); }); 
+            document.getElementById('addCustomMetricBtn').addEventListener('click', () => openModal(document.getElementById('customMetricModal'))); 
+            document.getElementById('noteTemplateSelector').addEventListener('change', (e) => { const template = NOTE_TEMPLATES[e.target.value]; if(template) document.getElementById('newActionInput').value = template; }); 
+            clientDashboardEl.addEventListener('change', handleDashboardInteraction); 
+            clientDashboardEl.addEventListener('click', handleDashboardInteraction);
+            clientDashboardEl.addEventListener('submit', handleNewFormSubmits); 
+            
+            // Time Tracker Events
+            document.getElementById('startTimerBtn').addEventListener('click', () => {
+                if (!timerState.running) {
+                    timerState.running = true;
+                    timerState.startTime = Date.now();
+                    timerState.activeClientId = activeClientId;
+                    if (!timerInterval) {
+                        timerInterval = setInterval(updateTimerDisplay, 1000);
+                    }
+                }
+            });
+            document.getElementById('pauseTimerBtn').addEventListener('click', () => {
+                if (timerState.running) {
+                    timerState.running = false;
+                    const now = Date.now();
+                    timerState.elapsedTime += now - timerState.startTime;
+                    clearInterval(timerInterval);
+                    timerInterval = null;
+                    renderClientDashboard(); // Re-render to show paused state
+                }
+            });
+            document.getElementById('resetTimerBtn').addEventListener('click', () => {
+                timerState.running = false;
+                timerState.elapsedTime = 0;
+                timerState.activeClientId = null;
+                clearInterval(timerInterval);
+                timerInterval = null;
+                renderClientDashboard();
+            });
+            document.getElementById('logTimeBtn').addEventListener('click', () => {
+                openModal(document.getElementById('timeLogModal'));
+                const hours = timerState.elapsedTime / (1000 * 60 * 60);
+                document.getElementById('timeLogHours').value = hours.toFixed(2);
+            });
+
+            const container = document.getElementById('metricsContainer'); 
+            let draggedItem = null; 
+            container.addEventListener('dragstart', e => { if(e.target.classList.contains('draggable')) { draggedItem = e.target; setTimeout(() => e.target.classList.add('dragging'), 0); } }); 
+            container.addEventListener('dragend', e => { if(draggedItem) { draggedItem.classList.remove('dragging'); draggedItem = null; } }); 
+            container.addEventListener('dragover', e => { e.preventDefault(); const afterElement = getDragAfterElement(container, e.clientY); const draggable = document.querySelector('.dragging'); if (afterElement == null) { container.appendChild(draggable); } else { container.insertBefore(draggable, afterElement); } }); 
+            
             document.getElementById('editProfileBtn').addEventListener('click', (e) => { 
                 e.stopPropagation();
                 const card = document.getElementById('clientProfileCard'); 
@@ -635,7 +719,8 @@
                     e.target.textContent = 'Save Profile'; 
                 } 
             });
-            renderAnalyticsChart(clients.find(c => c.id === activeClientId)); renderActionPriorityChart(clients.find(c => c.id === activeClientId)); 
+            renderAnalyticsChart(clients.find(c => c.id === activeClientId)); 
+            renderActionPriorityChart(clients.find(c => c.id === activeClientId)); 
         };
         function getDragAfterElement(container, y) { const draggableElements = [...container.querySelectorAll('.draggable:not(.dragging)')]; return draggableElements.reduce((closest, child) => { const box = child.getBoundingClientRect(); const offset = y - box.top - box.height / 2; if (offset < 0 && offset > closest.offset) { return { offset: offset, element: child }; } else { return closest; } }, { offset: Number.NEGATIVE_INFINITY }).element; }
 
@@ -669,7 +754,26 @@
             document.getElementById('cancelCustomMetric').addEventListener('click', () => closeModal(document.getElementById('customMetricModal')));
             
             const timeLogModal = document.getElementById('timeLogModal');
-            document.getElementById('timeLogForm').addEventListener('submit', (e) => { e.preventDefault(); const client = clients.find(c => c.id === activeClientId); if (!client) return; const hours = parseFloat(document.getElementById('timeLogHours').value); const description = document.getElementById('timeLogDescription').value.trim(); if (hours > 0) { if (!client.timeLogs) client.timeLogs = []; client.timeLogs.push({ date: new Date().toISOString(), hours, description }); updateClient(activeClientId, client); closeModal(timeLogModal); renderClientDashboard(); } });
+            document.getElementById('timeLogForm').addEventListener('submit', (e) => { 
+                e.preventDefault(); 
+                const client = clients.find(c => c.id === activeClientId); 
+                if (!client) return; 
+                const hours = parseFloat(document.getElementById('timeLogHours').value); 
+                const description = document.getElementById('timeLogDescription').value.trim(); 
+                if (hours > 0) { 
+                    if (!client.timeLogs) client.timeLogs = []; 
+                    client.timeLogs.push({ date: new Date().toISOString(), hours, description }); 
+                    updateClient(activeClientId, client); 
+                    // Reset timer after logging
+                    timerState.running = false;
+                    timerState.elapsedTime = 0;
+                    timerState.activeClientId = null;
+                    clearInterval(timerInterval);
+                    timerInterval = null;
+                    closeModal(timeLogModal); 
+                    renderClientDashboard(); 
+                } 
+            });
             document.getElementById('cancelTimeLog').addEventListener('click', () => closeModal(document.getElementById('timeLogModal')));
 
 
